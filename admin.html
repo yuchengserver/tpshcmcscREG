@@ -46,26 +46,26 @@
       border-bottom-color: var(--primary-color);
     }
 
-    /* 表單區塊樣式 */
-    .section-box {
-      display: none;
-    }
-    .section-box.active {
-      display: block;
-    }
+    /* 表單與區塊樣式 */
+    .section-box { display: none; }
+    .section-box.active { display: block; }
 
     .form-row {
       display: flex;
       gap: 15px;
     }
-    .form-row .form-group {
-      flex: 1;
-    }
+    .form-row .form-group { flex: 1; }
 
-    /* 表格樣式 */
-    table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+    /* 表格容器與樣式 (增加 RWD 橫向滾動支援) */
+    .table-container {
+      width: 100%;
+      overflow-x: auto;
+      margin-top: 15px;
+    }
+    table { width: 100%; border-collapse: collapse; min-width: 600px; }
     th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--border-color); font-size: 0.88rem; }
     th { background-color: #f1f8fc; color: var(--primary-color); white-space: nowrap; }
+    
     .badge-event {
       display: inline-block;
       padding: 2px 8px;
@@ -132,21 +132,24 @@
 
     <!-- 區塊 2：查看報名資料 -->
     <div id="registrations-section" class="section-box">
-      <div id="loading">載入報名資料中...</div>
-      <table id="dataTable" style="display:none;">
-        <thead>
-          <tr>
-            <th>報名時間</th>
-            <th>活動ID</th>
-            <th>姓名</th>
-            <th>班級</th>
-            <th>座號</th>
-            <th>學校 Email</th>
-            <th>備註</th>
-          </tr>
-        </thead>
-        <tbody id="tableBody"></tbody>
-      </table>
+      <div id="loading" style="text-align: center; color: #6c757d; padding: 20px;">載入報名資料中...</div>
+      
+      <div class="table-container">
+        <table id="dataTable" style="display:none;">
+          <thead>
+            <tr>
+              <th>報名時間</th>
+              <th>活動ID</th>
+              <th>姓名</th>
+              <th>班級</th>
+              <th>座號</th>
+              <th>學校 Email</th>
+              <th>備註</th>
+            </tr>
+          </thead>
+          <tbody id="tableBody"></tbody>
+        </table>
+      </div>
     </div>
   </div>
 
@@ -237,8 +240,9 @@
     }
 
     // 防範 XSS 的字串轉義函式
+// 防範 XSS 的字串轉義函式
     function escapeHtml(text) {
-      if (!text) return '';
+      if (text === null || text === undefined) return '';
       return String(text)
         .replace(/&/g, "&amp;")
         .replace(/</g, "&lt;")
