@@ -10,14 +10,15 @@ body {
   color: #333;
 }
 
-/* ---------------- 頂部導覽列 (Navbar) ---------------- */
+/* 頂部導覽列固定橫向排版 */
 .navbar {
   background-color: #ffffff;
   border-bottom: 1px solid #e1e4e8;
   padding: 12px 30px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+  display: flex !important;
+  flex-direction: row !important;
+  justify-content: space-between !important;
+  align-items: center !important;
   box-shadow: 0 1px 3px rgba(0,0,0,0.03);
   position: sticky;
   top: 0;
@@ -26,15 +27,15 @@ body {
 }
 
 .nav-brand {
-  display: flex;
-  align-items: center;
-  gap: 10px;
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px;
   font-size: 18px;
   font-weight: bold;
   color: #24292e;
 }
 
-/* 嚴格控制導覽列小會徽大小，防止過大跑版 */
+/* 嚴格鎖死 Logo 大小，避免放大跑版 */
 .nav-logo {
   height: 28px !important;
   width: auto !important;
@@ -42,7 +43,8 @@ body {
 }
 
 .nav-menu {
-  display: flex;
+  display: flex !important;
+  flex-direction: row !important;
   gap: 10px;
 }
 
@@ -79,7 +81,7 @@ body {
   color: #24292e;
 }
 
-/* ---------------- 主容器與區塊 ---------------- */
+/* 內容容器 */
 .container {
   max-width: 500px;
   margin: 30px auto;
@@ -94,7 +96,7 @@ body {
   max-width: 1000px;
 }
 
-/* 規則說明卡片 (仿照圖片中公投專區的提示框樣式) */
+/* 規則說明卡片 */
 .rule-card {
   background-color: #f8f9fa;
   border: 1px solid #e9ecef;
@@ -122,7 +124,7 @@ body {
   margin-bottom: 6px;
 }
 
-/* 提示與重新整理操作列 */
+/* 操作列 */
 .action-bar {
   background-color: #e8f4fd;
   border: 1px solid #bbe2ff;
@@ -155,7 +157,7 @@ body {
   background-color: #0056b3;
 }
 
-/* ---------------- 活動區段與卡片 ---------------- */
+/* 區段標題 */
 .section-title {
   font-size: 18px;
   margin-bottom: 15px;
