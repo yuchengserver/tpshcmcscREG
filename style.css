@@ -1,0 +1,36 @@
+/* 區域標題樣式 */
+.section-title {
+  padding-bottom: 8px;
+  border-bottom: 2px solid #ddd;
+  margin-bottom: 15px;
+  font-size: 20px;
+}
+
+.active-title {
+  color: #28a745;
+  border-bottom-color: #28a745;
+}
+
+.upcoming-title {
+  color: #ffc107;
+  border-bottom-color: #ffc107;
+}
+
+.ended-title {
+  color: #dc3545;
+  border-bottom-color: #dc3545;
+}
+
+/* 停用按鈕樣式 */
+.btn-disabled {
+  background-color: #6c757d !important;
+  cursor: not-allowed !important;
+  opacity: 0.7;
+}
+
+/* 無資料提示文字 */
+.no-data {
+  color: #777;
+  font-style: italic;
+  padding: 10px 0;
+}

@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TSSC13TH - 後台管理系統</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- 登入卡片 -->
+  <div id="loginBox" class="container">
+    <div class="header">
+      <img src="tpshcmcsc.png" alt="TSSC Logo" class="logo">
+      <h2>管理員登入</h2>
+    </div>
+    <div class="form-group">
+      <label for="adminPwd">請輸入後台密碼</label>
+      <input type="password" id="adminPwd" placeholder="請輸入密碼">
+    </div>
+    <button onclick="loginAdmin()">登入</button>
+    <div id="loginMsg" class="message error" style="display:none; margin-top:15px;"></div>
+  </div>
+
+  <!-- 後台主要內容 -->
+  <div id="adminContent" class="container wide" style="display:none;">
+    <div class="admin-header">
+      <h2>TSSC13TH 後台管理系統</h2>
+      <button onclick="logout()" class="btn-danger" style="width:auto; display:inline-block;">登出</button>
+    </div>
+
+    <!-- 區塊一：建立新活動 -->
+    <div class="admin-section" style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 30px; border: 1px solid #dee2e6;">
+      <h3>➕ 建立新活動報名</h3>
+      <form id="createEventForm" onsubmit="createEvent(event)">
+        <div class="form-row">
+          <div class="form-group half">
+            <label for="newEventId">活動 ID *</label>
+            <input type="text" id="newEventId" required placeholder="例如：ACT001">
+          </div>
+          <div class="form-group half">
+            <label for="newEventName">活動名稱 *</label>
+            <input type="text" id="newEventName" required placeholder="例如：學生會迎新晚會">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="newEventDesc">活動說明</label>
+          <textarea id="newEventDesc" rows="2" placeholder="活動詳細內容說明..."></textarea>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group half">
+            <label for="newStartTime">開始報名時間 *</label>
+            <input type="datetime-local" id="newStartTime" required>
+          </div>
+          <div class="form-group half">
+            <label for="newEndTime">結束報名時間 *</label>
+            <input type="datetime-local" id="newEndTime" required>
+          </div>
+        </div>
+
+        <button type="submit" class="btn-primary" id="createBtn">送出建立活動</button>
+      </form>
+      <div id="createMsg" class="message" style="display:none;"></div>
+    </div>
+
+    <!-- 區塊二：已報名者資料列表 -->
+    <div class="admin-section">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+        <h3>📋 已報名者資料列表</h3>
+        <button onclick="loadData()" class="btn-secondary" style="width:auto; padding: 8px 15px;">重新整理資料</button>
+      </div>
+
+      <div class="table-responsive">
+        <table id="dataTable">
+          <thead>
+            <tr>
+              <th>報名時間</th>
+              <th>活動 ID</th>
+              <th>姓名</th>
+              <th>班級</th>
+              <th>座號</th>
+              <th>Email</th>
+              <th>備註</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td colspan="7" style="text-align: center;">載入中...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <p style="text-align: center; margin-top: 25px;"><a href="index.html">← 返回首頁</a></p>
+  </div>
+
+  <script>
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbzw8vASm3Nm7eIpcQYQ_QBMK4m3j0d9Thcw8N8nWBsuUPJDCsioB_KLErcH1nIP2v0/exec";
+    let currentPassword = "";
+
+    function loginAdmin() {
+      const pwd = document.getElementById("adminPwd").value.trim();
+      const loginMsg = document.getElementById("loginMsg");
+      
+      if (!pwd) {
+        loginMsg.textContent = "請輸入密碼！";
+        loginMsg.style.display = "block";
+        return;
+      }
+
+      currentPassword = pwd;
+      loadData();
+    }
+
+    // 載入報名資料
+    function loadData() {
+      const loginMsg = document.getElementById("loginMsg");
+      
+      fetch(`${GAS_URL}?action=getRegistrations&password=${encodeURIComponent(currentPassword)}`)
+        .then(res => res.text())
+        .then(text => JSON.parse(text))
+        .then(res => {
+          if (res.status === "auth_error") {
+            loginMsg.textContent = "密碼錯誤，請重新輸入！";
+            loginMsg.style.display = "block";
+            document.getElementById("loginBox").style.display = "block";
+            document.getElementById("adminContent").style.display = "none";
+            return;
+          }
+
+          document.getElementById("loginBox").style.display = "none";
+          document.getElementById("adminContent").style.display = "block";
+
+          const tbody = document.querySelector("#dataTable tbody");
+          tbody.innerHTML = "";
+
+          if (res.status === "success" && res.data && res.data.length > 0) {
+            res.data.forEach(row => {
+              const tr = document.createElement("tr");
+              tr.innerHTML = `
+                <td>${row["報名時間"] ? new Date(row["報名時間"]).toLocaleString() : ''}</td>
+                <td>${row["活動ID"] || ''}</td>
+                <td>${row["姓名"] || ''}</td>
+                <td>${row["班級"] || ''}</td>
+                <td>${row["座號"] || ''}</td>
+                <td>${row["email"] || ''}</td>
+                <td>${row["備註"] || ''}</td>
+              `;
+              tbody.appendChild(tr);
+            });
+          } else {
+            tbody.innerHTML = "<tr><td colspan='7' style='text-align:center;'>目前尚無報名資料</td></tr>";
+          }
+        })
+        .catch(err => {
+          console.error(err);
+          alert("載入失敗，請檢查連線狀態！");
+        });
+    }
+
+    // 建立新活動
+    function createEvent(e) {
+      e.preventDefault();
+      const createBtn = document.getElementById("createBtn");
+      const createMsg = document.getElementById("createMsg");
+
+      createBtn.disabled = true;
+      createBtn.textContent = "建立中...";
+
+      const payload = {
+        action: "createEvent",
+        password: currentPassword,
+        eventId: document.getElementById("newEventId").value.trim(),
+        eventName: document.getElementById("newEventName").value.trim(),
+        eventDesc: document.getElementById("newEventDesc").value.trim(),
+        startTime: document.getElementById("newStartTime").value,
+        endTime: document.getElementById("newEndTime").value
+      };
+
+      fetch(GAS_URL, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify(payload)
+      })
+      .then(res => res.text())
+      .then(text => JSON.parse(text))
+      .then(res => {
+        createMsg.style.display = "block";
+        if (res.status === "success") {
+          createMsg.className = "message success";
+          createMsg.textContent = res.message;
+          document.getElementById("createEventForm").reset();
+        } else {
+          createMsg.className = "message error";
+          createMsg.textContent = res.message;
+        }
+      })
+      .catch(err => {
+        console.error(err);
+        createMsg.style.display = "block";
+        createMsg.className = "message error";
+        createMsg.textContent = "建立失敗，請檢查網路連線。";
+      })
+      .finally(() => {
+        createBtn.disabled = false;
+        createBtn.textContent = "送出建立活動";
+      });
+    }
+
+    function logout() {
+      currentPassword = "";
+      document.getElementById("adminPwd").value = "";
+      document.getElementById("loginBox").style.display = "block";
+      document.getElementById("adminContent").style.display = "none";
+      document.getElementById("loginMsg").style.display = "none";
+    }
+  </script>
+</body>
+</html>

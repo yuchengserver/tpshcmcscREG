@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TSSC13TH - 活動報名系統</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container wide">
+    <div class="header">
+      <img src="tpshcmcsc.png" alt="TSSC Logo" class="logo">
+      <h1>TSSC13TH 胡台校學生會 活動列表</h1>
+    </div>
+
+    <div class="nav-links">
+      <a href="signup.html" class="btn-primary">前往報名頁面</a>
+      <a href="admin.html" class="btn-secondary">後台管理</a>
+    </div>
+
+    <div id="loading" class="message">資料載入中...</div>
+
+    <!-- 三個活動分區 -->
+    <div id="eventsContainer" style="display: none;">
+      <!-- 1. 開放報名中 -->
+      <section class="event-section">
+        <h2 class="section-title active-title">🟢 開放報名中</h2>
+        <div id="activeEvents" class="event-grid"></div>
+      </section>
+
+      <!-- 2. 待開放 -->
+      <section class="event-section" style="margin-top: 30px;">
+        <h2 class="section-title upcoming-title">🟡 待開放報名</h2>
+        <div id="upcomingEvents" class="event-grid"></div>
+      </section>
+
+      <!-- 3. 已截止 -->
+      <section class="event-section" style="margin-top: 30px;">
+        <h2 class="section-title ended-title">🔴 已截止報名</h2>
+        <div id="endedEvents" class="event-grid"></div>
+      </section>
+    </div>
+  </div>
+
+  <script>
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbzw8vASm3Nm7eIpcQYQ_QBMK4m3j0d9Thcw8N8nWBsuUPJDCsioB_KLErcH1nIP2v0/exec";
+
+    // 取得 GMT+7 的當前時間
+    function getNowGMT7() {
+      const now = new Date();
+      // 轉換成毫秒數後計算 GMT+7 的時間
+      const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
+      return new Date(utc + (3600000 * 7));
+    }
+
+    function fetchEvents() {
+      fetch(`${GAS_URL}?action=getEvents`)
+        .then(res => res.json())
+        .then(res => {
+          document.getElementById("loading").style.display = "none";
+          document.getElementById("eventsContainer").style.display = "block";
+
+          const activeContainer = document.getElementById("activeEvents");
+          const upcomingContainer = document.getElementById("upcomingEvents");
+          const endedContainer = document.getElementById("endedEvents");
+
+          activeContainer.innerHTML = "";
+          upcomingContainer.innerHTML = "";
+          endedContainer.innerHTML = "";
+
+          if (res.status === "success" && res.data && res.data.length > 0) {
+            const now = getNowGMT7();
+
+            let activeCount = 0;
+            let upcomingCount = 0;
+            let endedCount = 0;
+
+            res.data.forEach(event => {
+              const startTime = new Date(event["開始時間"]);
+              const endTime = new Date(event["結束時間"]);
+
+              const card = document.createElement("div");
+              card.className = "event-card";
+
+              // 判斷活動狀態 (GMT+7 時間比較)
+              if (now < startTime) {
+                // 待開放 (當前時間 < 開始時間)
+                upcomingCount++;
+                card.innerHTML = createCardHTML(event, "upcoming");
+                upcomingContainer.appendChild(card);
+              } else if (now >= endTime) {
+                // 已截止 (當前時間 >= 結束時間)
+                endedCount++;
+                card.innerHTML = createCardHTML(event, "ended");
+                endedContainer.appendChild(card);
+              } else {
+                // 開放中 (開始時間 <= 當前時間 < 結束時間)
+                activeCount++;
+                card.innerHTML = createCardHTML(event, "active");
+                activeContainer.appendChild(card);
+              }
+            });
+
+            // 若某區域無活動時顯示提示文字
+            if (activeCount === 0) activeContainer.innerHTML = "<p class='no-data'>目前無開放報名中的活動。</p>";
+            if (upcomingCount === 0) upcomingContainer.innerHTML = "<p class='no-data'>目前無待開放的活動。</p>";
+            if (endedCount === 0) endedContainer.innerHTML = "<p class='no-data'>目前無已截止的活動。</p>";
+
+          } else {
+            activeContainer.innerHTML = "<p class='no-data'>目前尚無任何活動資料。</p>";
+            upcomingContainer.innerHTML = "<p class='no-data'>目前尚無任何活動資料。</p>";
+            endedContainer.innerHTML = "<p class='no-data'>目前尚無任何活動資料。</p>";
+          }
+        })
+        .catch(err => {
+          console.error(err);
+          document.getElementById("loading").className = "message error";
+          document.getElementById("loading").textContent = "無法載入活動列表，請稍後再試。";
+        });
+    }
+
+    // 產生卡片 HTML 結構
+    function createCardHTML(event, status) {
+      let buttonHTML = "";
+      if (status === "active") {
+        buttonHTML = `<a href="signup.html?eventId=${encodeURIComponent(event["活動ID"] || '')}" class="btn-apply">立即報名</a>`;
+      } else if (status === "upcoming") {
+        buttonHTML = `<button class="btn-disabled" disabled>尚未開放</button>`;
+      } else if (status === "ended") {
+        buttonHTML = `<button class="btn-disabled" disabled>報名已截止</button>`;
+      }
+
+      const formatTime = (timeStr) => {
+        if (!timeStr) return '未定';
+        const d = new Date(timeStr);
+        return isNaN(d.getTime()) ? timeStr : d.toLocaleString("zh-TW", { timeZone: "Asia/Ho_Chi_Minh" });
+      };
+
+      return `
+        <h3>${event["活動名稱"] || '未命名活動'}</h3>
+        <p class="event-id"><strong>活動 ID：</strong> ${event["活動ID"] || ''}</p>
+        <p><strong>說明：</strong> ${event["說明"] || '無'}</p>
+        <p><strong>開始時間：</strong> ${formatTime(event["開始時間"])}</p>
+        <p><strong>結束時間：</strong> ${formatTime(event["結束時間"])}</p>
+        ${buttonHTML}
+      `;
+    }
+
+    window.onload = fetchEvents;
+  </script>
+</body>
+</html>

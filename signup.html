@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TSSC13TH - 活動報名</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <img src="tpshcmcsc.png" alt="TSSC Logo" class="logo">
+      <h2>TSSC13TH 活動報名表單</h2>
+    </div>
+
+    <form id="signupForm">
+      <div class="form-group">
+        <label for="eventId">選擇活動 / 活動 ID *</label>
+        <select id="eventId" required>
+          <option value="">載入活動中...</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="name">姓名 *</label>
+        <input type="text" id="name" required placeholder="例如：張小明">
+      </div>
+
+      <div class="form-row">
+        <div class="form-group half">
+          <label for="className">班級 *</label>
+          <input type="text" id="className" required placeholder="例如：高二1班">
+        </div>
+        <div class="form-group half">
+          <label for="seatNumber">座號 *</label>
+          <input type="text" id="seatNumber" required placeholder="例如：15">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="email">學校信箱 (Email) *</label>
+        <div class="input-with-btn">
+          <input type="email" id="email" required placeholder="7位學號@tshcmc.edu.vn" pattern="^\d{7}@tshcmc\.edu\.vn$" title="請輸入正確的學校信箱格式：7位學號@tshcmc.edu.vn">
+          <button type="button" id="sendCodeBtn" onclick="sendVerificationCode()">取得驗證碼</button>
+        </div>
+        <small style="color: #666; font-size: 12px;">格式範例：1234567@tshcmc.edu.vn</small>
+      </div>
+
+      <div class="form-group">
+        <label for="code">信箱驗證碼 *</label>
+        <input type="text" id="code" required placeholder="請輸入 6 位數驗證碼" maxlength="6">
+      </div>
+
+      <div class="form-group">
+        <label for="note">備註</label>
+        <textarea id="note" rows="3" placeholder="其他說明或特殊需求"></textarea>
+      </div>
+
+      <button type="submit" id="submitBtn">確認並送出報名</button>
+    </form>
+
+    <div id="message" class="message" style="display:none;"></div>
+    <p style="text-align: center; margin-top: 15px;"><a href="index.html">← 返回活動列表</a></p>
+  </div>
+
+  <script>
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbzw8vASm3Nm7eIpcQYQ_QBMK4m3j0d9Thcw8N8nWBsuUPJDCsioB_KLErcH1nIP2v0/exec";
+    let countdownTimer = null;
+
+    // 檢查信箱是否符合學校格式 (7位學號@tshcmc.edu.vn)
+    function validateSchoolEmail(email) {
+      const regex = /^\d{7}@tshcmc\.edu\.vn$/i;
+      return regex.test(email);
+    }
+
+    // 取得 GMT+7 時間
+    function getNowGMT7() {
+      const now = new Date();
+      const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
+      return new Date(utc + (3600000 * 7));
+    }
+
+    window.onload = function() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const targetEventId = urlParams.get('eventId');
+
+      fetch(`${GAS_URL}?action=getEvents`)
+        .then(res => res.json())
+        .then(res => {
+          const select = document.getElementById("eventId");
+          select.innerHTML = '<option value="">-- 請選擇報名活動 --</option>';
+          
+          if (res.status === "success" && res.data && res.data.length > 0) {
+            const now = getNowGMT7();
+
+            res.data.forEach(item => {
+              const startTime = new Date(item["開始時間"]);
+              const endTime = new Date(item["結束時間"]);
+              const isActive = (now >= startTime && now < endTime);
+              
+              if (isActive || item["活動ID"] === targetEventId) {
+                const opt = document.createElement("option");
+                opt.value = item["活動ID"];
+                opt.textContent = `${item["活動名稱"]} (${item["活動ID"]})${!isActive ? ' [已關閉/未開放]' : ''}`;
+                
+                if (targetEventId && item["活動ID"] === targetEventId) {
+                  opt.selected = true;
+                }
+                select.appendChild(opt);
+              }
+            });
+
+            if (select.options.length === 1) {
+              select.innerHTML = '<option value="">目前無開放可報名的活動</option>';
+            }
+          } else {
+            select.innerHTML = '<option value="">目前尚無活動資料</option>';
+          }
+        })
+        .catch(err => {
+          console.error("載入活動失敗:", err);
+          document.getElementById("eventId").innerHTML = '<option value="">載入活動失敗，請重新整理</option>';
+        });
+    };
+
+    // 發送驗證碼
+    function sendVerificationCode() {
+      const email = document.getElementById("email").value.trim();
+      const sendBtn = document.getElementById("sendCodeBtn");
+      const msgDiv = document.getElementById("message");
+
+      if (!validateSchoolEmail(email)) {
+        alert("請輸入正確的學校信箱格式：7位學號@tshcmc.edu.vn（例如：1234567@tshcmc.edu.vn）！");
+        return;
+      }
+
+      sendBtn.disabled = true;
+      sendBtn.textContent = "發送中...";
+
+      fetch(GAS_URL, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify({ action: "sendCode", email: email })
+      })
+      .then(res => res.text())
+      .then(text => JSON.parse(text))
+      .then(res => {
+        msgDiv.style.display = "block";
+        if (res.status === "success") {
+          msgDiv.className = "message success";
+          msgDiv.textContent = res.message;
+          startCountdown(120); // 2 分鐘冷卻倒數
+        } else {
+          msgDiv.className = "message error";
+          msgDiv.textContent = res.message;
+          sendBtn.disabled = false;
+          sendBtn.textContent = "取得驗證碼";
+        }
+      })
+      .catch(err => {
+        console.error(err);
+        alert("發送失敗，請檢查網路連線或稍後再試！");
+        sendBtn.disabled = false;
+        sendBtn.textContent = "取得驗證碼";
+      });
+    }
+
+    // 按鈕倒數計時器
+    function startCountdown(seconds) {
+      const sendBtn = document.getElementById("sendCodeBtn");
+      let remain = seconds;
+      
+      clearInterval(countdownTimer);
+      countdownTimer = setInterval(() => {
+        if (remain <= 0) {
+          clearInterval(countdownTimer);
+          sendBtn.disabled = false;
+          sendBtn.textContent = "取得驗證碼";
+        } else {
+          sendBtn.textContent = `${remain} 秒後重新發送`;
+          remain--;
+        }
+      }, 1000);
+    }
+
+    // 送出表單
+    document.getElementById("signupForm").addEventListener("submit", function(e) {
+      e.preventDefault();
+      const submitBtn = document.getElementById("submitBtn");
+      const msgDiv = document.getElementById("message");
+
+      const eventId = document.getElementById("eventId").value;
+      const email = document.getElementById("email").value.trim();
+
+      if (!eventId) {
+        alert("請選擇要報名的活動！");
+        return;
+      }
+
+      if (!validateSchoolEmail(email)) {
+        alert("信箱格式錯誤！必須為 7 位學號@tshcmc.edu.vn");
+        return;
+      }
+
+      submitBtn.disabled = true;
+      submitBtn.textContent = "資料驗證中...";
+
+      const payload = {
+        action: "submit",
+        eventId: eventId,
+        name: document.getElementById("name").value.trim(),
+        className: document.getElementById("className").value.trim(),
+        seatNumber: document.getElementById("seatNumber").value.trim(),
+        email: email,
+        code: document.getElementById("code").value.trim(),
+        note: document.getElementById("note").value.trim()
+      };
+
+      fetch(GAS_URL, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify(payload)
+      })
+      .then(res => res.text())
+      .then(text => JSON.parse(text))
+      .then(res => {
+        msgDiv.style.display = "block";
+        if (res.status === "success") {
+          msgDiv.className = "message success";
+          msgDiv.textContent = res.message;
+          document.getElementById("signupForm").reset();
+        } else {
+          msgDiv.className = "message error";
+          msgDiv.textContent = res.message;
+        }
+      })
+      .catch(err => {
+        console.error(err);
+        msgDiv.style.display = "block";
+        msgDiv.className = "message error";
+        msgDiv.textContent = "提交失敗，請檢查網路。";
+      })
+      .finally(() => {
+        submitBtn.disabled = false;
+        submitBtn.textContent = "確認並送出報名";
+      });
+    });
+  </script>
+</body>
+</html>
