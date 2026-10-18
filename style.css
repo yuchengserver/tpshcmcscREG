@@ -266,3 +266,10 @@ body {
   color: #cb2431;
   border-color: #f97583;
 }
+/* 強制將會徽轉為純黑色 */
+.nav-logo {
+  height: 28px !important;
+  width: auto !important;
+  object-fit: contain;
+  filter: brightness(0) saturate(100%) !important;
+}
