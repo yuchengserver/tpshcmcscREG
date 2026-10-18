@@ -21,7 +21,7 @@
   </header>
 
   <div class="container wide">
-    <!-- 規則說明提示框 -->
+    <!-- 規則說明卡片 -->
     <div class="rule-card">
       <h3>📜 活動報名與參與規則</h3>
       <ul>
@@ -42,19 +42,16 @@
 
     <!-- 三個活動分區 -->
     <div id="eventsContainer" style="display: none;">
-      <!-- 1. 開放報名中 -->
       <section class="event-section">
         <h2 class="section-title active-title">📌 目前開放中的項目</h2>
         <div id="activeEvents" class="event-grid"></div>
       </section>
 
-      <!-- 2. 待開放 -->
       <section class="event-section" style="margin-top: 35px;">
         <h2 class="section-title upcoming-title">⏳ 即將開始 / 預告中的項目</h2>
         <div id="upcomingEvents" class="event-grid"></div>
       </section>
 
-      <!-- 3. 已截止 -->
       <section class="event-section" style="margin-top: 35px;">
         <h2 class="section-title ended-title">📁 已截止的項目</h2>
         <div id="endedEvents" class="event-grid"></div>
@@ -65,7 +62,6 @@
   <script>
     const GAS_URL = "https://script.google.com/macros/s/AKfycbzw8vASm3Nm7eIpcQYQ_QBMK4m3j0d9Thcw8N8nWBsuUPJDCsioB_KLErcH1nIP2v0/exec";
 
-    // 取得 GMT+7 的當前時間
     function getNowGMT7() {
       const now = new Date();
       const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
@@ -95,15 +91,11 @@
 
           if (res.status === "success" && res.data && res.data.length > 0) {
             const now = getNowGMT7();
-
-            let activeCount = 0;
-            let upcomingCount = 0;
-            let endedCount = 0;
+            let activeCount = 0, upcomingCount = 0, endedCount = 0;
 
             res.data.forEach(event => {
               const startTime = new Date(event["開始時間"]);
               const endTime = new Date(event["結束時間"]);
-
               const card = document.createElement("div");
               card.className = "event-card";
 
@@ -135,7 +127,7 @@
         .catch(err => {
           console.error(err);
           loading.className = "message error";
-          loading.textContent = "無法載入活動列表，請稍後再試。";
+          loading.textContent = "無法載入活動列表，請檢查 GAS 部署是否已更新為「新版本」。";
         });
     }
 
