@@ -4,6 +4,22 @@
   <base target="_top">
   <?!= HtmlService.createHtmlOutputFromFile('style').getContent(); ?>
   <style>
+    /* 頂部導覽按鈕 */
+    .top-nav {
+      display: flex;
+      justify-content: flex-start;
+      margin-bottom: 15px;
+    }
+    .home-link {
+      color: var(--primary-color);
+      text-decoration: none;
+      font-size: 0.9rem;
+      font-weight: bold;
+    }
+    .home-link:hover {
+      text-decoration: underline;
+    }
+
     .verify-group { display: flex; gap: 10px; }
     .verify-group input { flex: 1; }
     .btn-verify {
@@ -42,6 +58,11 @@
 </head>
 <body>
   <div class="container">
+    <!-- 頂部導覽：回到活動列表 -->
+    <div class="top-nav">
+      <a href="<?= ScriptApp.getService().getUrl(); ?>?page=index" class="home-link">⬅️ 回活動列表</a>
+    </div>
+
     <div class="header">
       <img src="tpshcmcsc.png" alt="會徽" onerror="this.style.display='none'"> 
       <h1>TSSC13TH 活動報名</h1>
