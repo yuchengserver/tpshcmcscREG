@@ -1,0 +1,105 @@
+:root {
+  --primary-color: #0077b6;      /* 品牌主色：深海洋藍 */
+  --accent-color: #90e0ef;       /* 亮淺藍 */
+  --bg-color: #f8f9fa;           /* 乾淨白/極淺灰背景 */
+  --card-bg: #ffffff;           /* 純白卡片 */
+  --text-color: #2b2d42;         /* 深色內文 */
+  --border-color: #e9ecef;       /* 淡灰色邊框 */
+  --hover-color: #0096c7;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: 'PingFang TC', 'Microsoft JhengHei', sans-serif;
+}
+
+body {
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  padding: 20px;
+}
+
+.container {
+  background: var(--card-bg);
+  width: 100%;
+  max-width: 500px;
+  padding: 40px 30px;
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(0, 119, 182, 0.08);
+  border: 1px solid var(--border-color);
+}
+
+.header {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.header img {
+  width: 90px;
+  height: auto;
+  margin-bottom: 15px;
+}
+
+.header h1 {
+  font-size: 1.5rem;
+  color: var(--primary-color);
+  letter-spacing: 1px;
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-group label {
+  display: block;
+  font-size: 0.9rem;
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: #495057;
+}
+
+.form-group input, .form-group textarea {
+  width: 100%;
+  padding: 12px 16px;
+  border: 1.5px solid var(--border-color);
+  border-radius: 8px;
+  font-size: 1rem;
+  outline: none;
+  transition: all 0.2s ease;
+  background-color: #fafafa;
+}
+
+.form-group input:focus, .form-group textarea:focus {
+  border-color: var(--primary-color);
+  background-color: #ffffff;
+  box-shadow: 0 0 0 3px rgba(0, 119, 182, 0.15);
+}
+
+.btn-submit {
+  width: 100%;
+  padding: 14px;
+  background-color: var(--primary-color);
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.btn-submit:hover {
+  background-color: var(--hover-color);
+}
+
+.msg {
+  margin-top: 15px;
+  text-align: center;
+  font-size: 0.95rem;
+}

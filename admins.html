@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <?!= HtmlService.createHtmlOutputFromFile('style').getContent(); ?>
+  <style>
+    .container { max-width: 850px; }
+    
+    /* 頁籤選單樣式 */
+    .admin-tabs {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 25px;
+      border-bottom: 2px solid var(--border-color);
+    }
+    .admin-tab-btn {
+      padding: 10px 20px;
+      border: none;
+      background: none;
+      font-size: 1rem;
+      font-weight: bold;
+      color: #6c757d;
+      cursor: pointer;
+      border-bottom: 3px solid transparent;
+      transition: all 0.2s;
+    }
+    .admin-tab-btn.active {
+      color: var(--primary-color);
+      border-bottom-color: var(--primary-color);
+    }
+
+    /* 表單區塊樣式 */
+    .section-box {
+      display: none;
+    }
+    .section-box.active {
+      display: block;
+    }
+
+    .form-row {
+      display: flex;
+      gap: 15px;
+    }
+    .form-row .form-group {
+      flex: 1;
+    }
+
+    /* 表格樣式 */
+    table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+    th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--border-color); font-size: 0.88rem; }
+    th { background-color: #f1f8fc; color: var(--primary-color); white-space: nowrap; }
+    .badge-event {
+      display: inline-block;
+      padding: 2px 8px;
+      background-color: #e0f2fe;
+      color: #0369a1;
+      border-radius: 4px;
+      font-size: 0.8rem;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <img src="tpshcmcsc.png" alt="會徽" onerror="this.style.display='none'">
+      <h1>TSSC13TH - 後台管理系統</h1>
+    </div>
+
+    <!-- 頁籤切換：發布活動 vs 查看報名紀錄 -->
+    <div class="admin-tabs">
+      <button class="admin-tab-btn active" onclick="switchTab('create-section', this)">➕ 發布新活動</button>
+      <button class="admin-tab-btn" onclick="switchTab('registrations-section', this)">📋 報名紀錄</button>
+    </div>
+
+    <!-- 區塊 1：發布新活動 -->
+    <div id="create-section" class="section-box active">
+      <form id="createEventForm">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="eventId">活動 ID * (例: EVT01)</label>
+            <input type="text" id="eventId" required placeholder="例如：EVT01">
+          </div>
+          <div class="form-group">
+            <label for="eventTitle">活動名稱 *</label>
+            <input type="text" id="eventTitle" required placeholder="例如：TSSC13TH 程式競賽">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="eventDesc">活動簡介 / 說明</label>
+          <textarea id="eventDesc" rows="3" placeholder="請輸入活動詳細說明..."></textarea>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="startTime">報名開始時間 *</label>
+            <input type="datetime-local" id="startTime" required>
+          </div>
+          <div class="form-group">
+            <label for="endTime">報名截止時間 *</label>
+            <input type="datetime-local" id="endTime" required>
+          </div>
+        </div>
+
+        <button type="submit" class="btn-submit" id="submitEventBtn">發布活動</button>
+      </form>
+      <div id="eventMsg" class="msg"></div>
+    </div>
+
+    <!-- 區塊 2：查看報名資料 -->
+    <div id="registrations-section" class="section-box">
+      <div id="loading">載入報名資料中...</div>
+      <table id="dataTable" style="display:none;">
+        <thead>
+          <tr>
+            <th>報名時間</th>
+            <th>活動ID</th>
+            <th>姓名</th>
+            <th>班級</th>
+            <th>座號</th>
+            <th>學校 Email</th>
+            <th>備註</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    // 頁籤切換
+    function switchTab(sectionId, btnElem) {
+      document.querySelectorAll('.admin-tab-btn').forEach(btn => btn.classList.remove('active'));
+      document.querySelectorAll('.section-box').forEach(box => box.classList.remove('active'));
+
+      if (btnElem) {
+        btnElem.classList.add('active');
+      }
+      document.getElementById(sectionId).classList.add('active');
+
+      if (sectionId === 'registrations-section') {
+        loadRegistrations();
+      }
+    }
+
+    // 發布活動表單提交
+    document.getElementById('createEventForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+
+      const btn = document.getElementById('submitEventBtn');
+      const msg = document.getElementById('eventMsg');
+      btn.disabled = true;
+      btn.innerText = '發布中...';
+      msg.innerText = '';
+
+      const eventData = {
+        id: document.getElementById('eventId').value.trim(),
+        title: document.getElementById('eventTitle').value.trim(),
+        desc: document.getElementById('eventDesc').value.trim(),
+        startTime: document.getElementById('startTime').value,
+        endTime: document.getElementById('endTime').value
+      };
+
+      google.script.run
+        .withSuccessHandler(function(res) {
+          btn.disabled = false;
+          btn.innerText = '發布活動';
+          msg.style.color = res.success ? '#2b9348' : '#d90429';
+          msg.innerText = res.message;
+          if (res.success) {
+            document.getElementById('createEventForm').reset();
+          }
+        })
+        .withFailureHandler(function(err) {
+          btn.disabled = false;
+          btn.innerText = '發布活動';
+          msg.style.color = '#d90429';
+          msg.innerText = '發布失敗，請重試：' + err;
+        })
+        .createEvent(eventData);
+    });
+
+    // 載入報名資料
+    function loadRegistrations() {
+      document.getElementById('loading').style.display = 'block';
+      document.getElementById('dataTable').style.display = 'none';
+
+      google.script.run
+        .withSuccessHandler(function(data) {
+          document.getElementById('loading').style.display = 'none';
+          const tbody = document.getElementById('tableBody');
+
+          if (!data || data.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding: 20px; color: #888;">目前尚無報名資料</td></tr>';
+          } else {
+            tbody.innerHTML = data.map(item => `
+              <tr>
+                <td>${item.time}</td>
+                <td><span class="badge-event">${escapeHtml(item.eventId || 'TSSC13TH')}</span></td>
+                <td><b>${escapeHtml(item.name)}</b></td>
+                <td>${escapeHtml(item.className || '-')}</td>
+                <td>${escapeHtml(item.seatNumber || '-')}</td>
+                <td>${escapeHtml(item.email)}</td>
+                <td>${escapeHtml(item.note || '')}</td>
+              </tr>
+            `).join('');
+          }
+          document.getElementById('dataTable').style.display = 'table';
+        })
+        .withFailureHandler(function(err) {
+          document.getElementById('loading').innerText = '載入報名資料失敗：' + err;
+        })
+        .getRegistrations();
+    }
+
+    // 防範 XSS 的字串轉義函式
+    function escapeHtml(text) {
+      if (!text) return '';
+      return String(text)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+  </script>
+</body>
+</html>

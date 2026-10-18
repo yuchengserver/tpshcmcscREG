@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <?!= HtmlService.createHtmlOutputFromFile('style').getContent(); ?>
+  <style>
+    .verify-group { display: flex; gap: 10px; }
+    .verify-group input { flex: 1; }
+    .btn-verify {
+      white-space: nowrap; padding: 0 15px;
+      background-color: var(--primary-color); color: #fff;
+      border: none; border-radius: 8px; font-size: 0.9rem;
+      font-weight: bold; cursor: pointer; transition: background-color 0.2s;
+    }
+    .btn-verify:disabled { background-color: #adb5bd; cursor: not-allowed; }
+    .form-row { display: flex; gap: 15px; }
+    .form-row .form-group { flex: 1; }
+    .hint-text { font-size: 0.78rem; color: #6c757d; margin-top: 4px; }
+    
+    /* 活動資訊與期限卡片 */
+    .event-info-box {
+      background-color: #f0f8ff;
+      border: 1px solid #bae6fd;
+      border-radius: 10px;
+      padding: 15px;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+    .event-info-box .event-name { font-weight: bold; font-size: 1.1rem; color: #0369a1; margin-bottom: 5px; }
+    .event-info-box .event-deadline { font-size: 0.88rem; color: #0284c7; }
+    .status-alert {
+      padding: 12px;
+      border-radius: 8px;
+      margin-bottom: 15px;
+      font-weight: bold;
+      text-align: center;
+      display: none;
+    }
+    .status-alert.ended { background-color: #ffe5e5; color: #d90429; border: 1px solid #ffb3b3; }
+    .status-alert.upcoming { background-color: #fff3cd; color: #856404; border: 1px solid #ffeeba; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <img src="tpshcmcsc.png" alt="會徽" onerror="this.style.display='none'"> 
+      <h1>TSSC13TH 活動報名</h1>
+    </div>
+
+    <!-- 活動簡介與報名期限顯示卡片 -->
+    <div class="event-info-box" id="eventInfoBox">
+      <div class="event-name" id="displayEventTitle">載入活動資訊中...</div>
+      <div class="event-deadline" id="displayEventDeadline">⏱️ 報名期限：確認中...</div>
+    </div>
+
+    <!-- 狀態警示 (非開放期間顯示) -->
+    <div id="statusAlert" class="status-alert"></div>
+
+    <form id="signupForm">
+      <div class="form-group">
+        <label for="name">姓名 *</label>
+        <input type="text" id="name" required placeholder="請輸入姓名">
+      </div>
+
+      <!-- 班級與座號併排 -->
+      <div class="form-row">
+        <div class="form-group">
+          <label for="className">班級 *</label>
+          <input type="text" id="className" required placeholder="例如：101 或 高一甲">
+        </div>
+        <div class="form-group">
+          <label for="seatNumber">座號 *</label>
+          <input type="number" id="seatNumber" min="1" max="99" required placeholder="例如：05">
+        </div>
+      </div>
+
+      <!-- 限制學校信箱格式 -->
+      <div class="form-group">
+        <label for="email">學校電子郵件 *</label>
+        <div class="verify-group">
+          <input type="email" id="email" required pattern="^\d{7}@tshcmc\.edu\.vn$" placeholder="7位學號@tshcmc.edu.vn">
+          <button type="button" class="btn-verify" id="sendCodeBtn" onclick="sendVerificationCode()">寄送驗證碼</button>
+        </div>
+        <div class="hint-text">僅限使用學校信箱（例如：1234567@tshcmc.edu.vn）</div>
+      </div>
+
+      <!-- 驗證碼欄位 -->
+      <div class="form-group">
+        <label for="code">信箱驗證碼 *</label>
+        <input type="text" id="code" required maxlength="6" placeholder="請輸入 6 位數驗證碼">
+      </div>
+
+      <div class="form-group">
+        <label for="note">備註</label>
+        <textarea id="note" rows="3" placeholder="其他說明..."></textarea>
+      </div>
+
+      <button type="submit" class="btn-submit" id="submitBtn">提交報名</button>
+    </form>
+
+    <div id="statusMsg" class="msg"></div>
+  </div>
+
+  <script>
+    let currentEventId = "TSSC13TH";
+
+    window.onload = function() {
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.has('eventId')) {
+        currentEventId = urlParams.get('eventId');
+      }
+
+      // 向後端請求獲取該活動詳細資訊與期限
+      google.script.run
+        .withSuccessHandler(function(eventDetail) {
+          if (!eventDetail) {
+            document.getElementById('displayEventTitle').innerText = `活動 (ID: ${currentEventId})`;
+            document.getElementById('displayEventDeadline').innerText = '未設定報名期限';
+            return;
+          }
+
+          document.getElementById('displayEventTitle').innerText = eventDetail.title;
+          document.getElementById('displayEventDeadline').innerText = `⏱️ 報名時間：${eventDetail.startTime} ~ ${eventDetail.endTime}`;
+
+          // 若不在報名期間內，鎖定表單
+          const alertBox = document.getElementById('statusAlert');
+
+          if (eventDetail.status === 'ended') {
+            alertBox.className = 'status-alert ended';
+            alertBox.innerText = '⚠️ 本活動報名已截止，暫不開放提交。';
+            alertBox.style.display = 'block';
+            disableForm();
+          } else if (eventDetail.status === 'upcoming') {
+            alertBox.className = 'status-alert upcoming';
+            alertBox.innerText = '⏳ 本活動尚未開放報名，請於開放時間內再來。';
+            alertBox.style.display = 'block';
+            disableForm();
+          }
+        })
+        .getEventDetail(currentEventId);
+    };
+
+    function disableForm() {
+      document.querySelectorAll('#signupForm input, #signupForm textarea, #signupForm button').forEach(el => el.disabled = true);
+    }
+
+    function validateSchoolEmail(email) {
+      const regex = /^\d{7}@tshcmc\.edu\.vn$/i;
+      return regex.test(email);
+    }
+
+    function sendVerificationCode() {
+      const emailInput = document.getElementById('email');
+      const email = emailInput.value.trim();
+      const sendBtn = document.getElementById('sendCodeBtn');
+      const msg = document.getElementById('statusMsg');
+
+      if (!validateSchoolEmail(email)) {
+        msg.style.color = '#d90429';
+        msg.innerText = '請填寫正確的學校信箱格式（7位學號@tshcmc.edu.vn）！';
+        return;
+      }
+
+      sendBtn.disabled = true;
+      msg.style.color = '#0077b6';
+      msg.innerText = '驗證碼寄送中...';
+
+      google.script.run
+        .withSuccessHandler(function(res) {
+          if (res.success) {
+            msg.style.color = '#2b9348';
+            msg.innerText = res.message;
+            startCountdown(sendBtn, 60);
+          } else {
+            sendBtn.disabled = false;
+            msg.style.color = '#d90429';
+            msg.innerText = res.message;
+          }
+        })
+        .withFailureHandler(function(err) {
+          sendBtn.disabled = false;
+          msg.style.color = '#d90429';
+          msg.innerText = '寄送失敗，請稍後再試。';
+        })
+        .sendEmailCode(email);
+    }
+
+    function startCountdown(btn, seconds) {
+      let counter = seconds;
+      btn.innerText = `${counter} 秒後重寄`;
+      const timer = setInterval(() => {
+        counter--;
+        if (counter > 0) {
+          btn.innerText = `${counter} 秒後重寄`;
+        } else {
+          clearInterval(timer);
+          btn.innerText = '寄送驗證碼';
+          btn.disabled = false;
+        }
+      }, 1000);
+    }
+
+    document.getElementById('signupForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      
+      const email = document.getElementById('email').value.trim();
+      const msg = document.getElementById('statusMsg');
+
+      if (!validateSchoolEmail(email)) {
+        msg.style.color = '#d90429';
+        msg.innerText = '請填寫正確的學校信箱格式（7位學號@tshcmc.edu.vn）！';
+        return;
+      }
+
+      const btn = document.getElementById('submitBtn');
+      btn.disabled = true;
+      btn.innerText = '提交中...';
+      msg.innerText = '';
+
+      const formData = {
+        eventId: currentEventId,
+        name: document.getElementById('name').value,
+        className: document.getElementById('className').value,
+        seatNumber: document.getElementById('seatNumber').value,
+        email: email,
+        code: document.getElementById('code').value,
+        note: document.getElementById('note').value
+      };
+
+      google.script.run
+        .withSuccessHandler(function(res) {
+          btn.disabled = false;
+          btn.innerText = '提交報名';
+          msg.style.color = res.success ? '#2b9348' : '#d90429';
+          msg.innerText = res.message;
+          if (res.success) {
+            document.getElementById('signupForm').reset();
+          }
+        })
+        .withFailureHandler(function(err) {
+          btn.disabled = false;
+          btn.innerText = '提交報名';
+          msg.style.color = '#d90429';
+          msg.innerText = '發生錯誤，請稍後再試。';
+        })
+        .submitForm(formData);
+    });
+  </script>
+</body>
+</html>
