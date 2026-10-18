@@ -1,4 +1,179 @@
-/* 區域標題樣式 */
+/* =================================載入基礎設定================================= */
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  background-color: #f0f2f5;
+  margin: 0;
+  padding: 20px;
+  color: #333;
+}
+
+/* =================================排版與容器================================= */
+.container {
+  max-width: 500px;
+  margin: 20px auto;
+  background: #ffffff;
+  padding: 30px;
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+}
+
+.container.wide {
+  max-width: 950px;
+}
+
+.header {
+  text-align: center;
+  margin-bottom: 25px;
+}
+
+.logo {
+  max-height: 80px;
+  margin-bottom: 10px;
+}
+
+/* =================================導覽與按鈕================================= */
+.nav-links {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+button, 
+.btn-apply, 
+.btn-primary, 
+.btn-secondary, 
+.btn-danger {
+  width: 100%;
+  padding: 12px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  transition: background 0.2s;
+}
+
+button:hover, .btn-primary:hover {
+  background-color: #0056b3;
+}
+
+button:disabled, .btn-disabled {
+  background-color: #6c757d !important;
+  cursor: not-allowed !important;
+  opacity: 0.7;
+}
+
+.btn-secondary {
+  background-color: #6c757d;
+}
+
+.btn-secondary:hover {
+  background-color: #5a6268;
+}
+
+.btn-danger {
+  background-color: #dc3545;
+}
+
+.btn-danger:hover {
+  background-color: #bd2130;
+}
+
+/* =================================表單控制項================================= */
+.form-group {
+  margin-bottom: 18px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: 600;
+  color: #444;
+}
+
+.form-group input, 
+.form-group select, 
+.form-group textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 15px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.form-group input:focus, 
+.form-group select:focus, 
+.form-group textarea:focus {
+  border-color: #007bff;
+}
+
+.form-row {
+  display: flex;
+  gap: 15px;
+}
+
+.form-group.half {
+  flex: 1;
+}
+
+.input-with-btn {
+  display: flex;
+  gap: 8px;
+}
+
+.input-with-btn input {
+  flex: 1;
+}
+
+.input-with-btn button {
+  width: auto;
+  padding: 0 15px;
+  font-size: 14px;
+  white-space: nowrap;
+  background-color: #17a2b8;
+}
+
+.input-with-btn button:hover {
+  background-color: #138496;
+}
+
+/* =================================提示與訊息================================= */
+.message {
+  padding: 12px;
+  border-radius: 6px;
+  margin-top: 15px;
+  text-align: center;
+  font-size: 14px;
+}
+
+.message.success {
+  background-color: #d4edda;
+  color: #155724;
+  border: 1px solid #c3e6cb;
+}
+
+.message.error {
+  background-color: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
+}
+
+/* =================================首頁活動列表區塊================================= */
+.event-section {
+  margin-top: 30px;
+}
+
 .section-title {
   padding-bottom: 8px;
   border-bottom: 2px solid #ddd;
@@ -12,7 +187,7 @@
 }
 
 .upcoming-title {
-  color: #ffc107;
+  color: #e0a800;
   border-bottom-color: #ffc107;
 }
 
@@ -21,16 +196,78 @@
   border-bottom-color: #dc3545;
 }
 
-/* 停用按鈕樣式 */
-.btn-disabled {
-  background-color: #6c757d !important;
-  cursor: not-allowed !important;
-  opacity: 0.7;
+.event-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 20px;
 }
 
-/* 無資料提示文字 */
+.event-card {
+  border: 1px solid #e1e4e8;
+  border-radius: 8px;
+  padding: 20px;
+  background-color: #fff;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.03);
+}
+
+.event-card h3 {
+  margin-top: 0;
+  color: #007bff;
+}
+
+.event-card .event-id {
+  color: #666;
+  font-size: 14px;
+}
+
 .no-data {
   color: #777;
   font-style: italic;
   padding: 10px 0;
+  margin: 0;
+}
+
+/* =================================後台管理與表格================================= */
+.admin-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.admin-section {
+  background: #f8f9fa; 
+  padding: 20px; 
+  border-radius: 8px; 
+  margin-bottom: 30px; 
+  border: 1px solid #dee2e6;
+}
+
+.table-responsive {
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+}
+
+th, td {
+  border: 1px solid #dee2e6;
+  padding: 10px;
+  text-align: left;
+  font-size: 14px;
+}
+
+th {
+  background-color: #007bff;
+  color: white;
+}
+
+tr:nth-child(even) {
+  background-color: #f8f9fa;
 }
