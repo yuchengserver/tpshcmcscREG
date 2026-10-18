@@ -7,15 +7,35 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
+  <!-- 頂部導覽列 -->
+  <header class="navbar">
+    <div class="nav-brand">
+      <img src="tpshcmcsc.png" alt="TSSC Logo" class="nav-logo">
+      <span>TSSC13TH 活動報名專區</span>
+    </div>
+    <div class="nav-menu">
+      <a href="index.html" class="nav-btn active">首頁與活動</a>
+      <a href="signup.html" class="nav-btn">立即報名</a>
+      <a href="admin.html" class="nav-btn admin-link">管理員後台</a>
+    </div>
+  </header>
+
   <div class="container wide">
-    <div class="header">
-      <img src="tpshcmcsc.png" alt="TSSC Logo" class="logo">
-      <h1>TSSC13TH 胡台校學生會 活動列表</h1>
+    <!-- 規則說明提示框 -->
+    <div class="rule-card">
+      <h3>📜 活動報名與參與規則</h3>
+      <ul>
+        <li><strong>實名驗證：</strong>為確保活動公平性，本平台全面採用學校官方信箱（<code>@tshcmc.edu.vn</code>）進行身份驗證。</li>
+        <li><strong>防重複提交：</strong>每一位同學針對同一項活動僅能提交一次報名。</li>
+        <li><strong>隱私與資訊安全：</strong>您所填寫的信箱僅用於驗證學生身份與寄送「報名成功驗證信」，相關資料將依規範處理。</li>
+        <li><strong>理性參與：</strong>請遵守校規與活動秩序，共同維護良好的校園活動品質。</li>
+      </ul>
     </div>
 
-    <div class="nav-links">
-      <a href="signup.html" class="btn-primary">前往報名頁面</a>
-      <a href="admin.html" class="btn-secondary">後台管理</a>
+    <!-- 重新整理與提示列 -->
+    <div class="action-bar">
+      <span class="tip-text">💡 提示：本平台採用實名驗證，報名時請使用學校信箱（@tshcmc.edu.vn）。</span>
+      <button onclick="fetchEvents()" class="btn-refresh">重新整理</button>
     </div>
 
     <div id="loading" class="message">資料載入中...</div>
@@ -24,19 +44,19 @@
     <div id="eventsContainer" style="display: none;">
       <!-- 1. 開放報名中 -->
       <section class="event-section">
-        <h2 class="section-title active-title">🟢 開放報名中</h2>
+        <h2 class="section-title active-title">📌 目前開放中的項目</h2>
         <div id="activeEvents" class="event-grid"></div>
       </section>
 
       <!-- 2. 待開放 -->
-      <section class="event-section" style="margin-top: 30px;">
-        <h2 class="section-title upcoming-title">🟡 待開放報名</h2>
+      <section class="event-section" style="margin-top: 35px;">
+        <h2 class="section-title upcoming-title">⏳ 即將開始 / 預告中的項目</h2>
         <div id="upcomingEvents" class="event-grid"></div>
       </section>
 
       <!-- 3. 已截止 -->
-      <section class="event-section" style="margin-top: 30px;">
-        <h2 class="section-title ended-title">🔴 已截止報名</h2>
+      <section class="event-section" style="margin-top: 35px;">
+        <h2 class="section-title ended-title">📁 已截止的項目</h2>
         <div id="endedEvents" class="event-grid"></div>
       </section>
     </div>
@@ -48,16 +68,21 @@
     // 取得 GMT+7 的當前時間
     function getNowGMT7() {
       const now = new Date();
-      // 轉換成毫秒數後計算 GMT+7 的時間
       const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
       return new Date(utc + (3600000 * 7));
     }
 
     function fetchEvents() {
+      const loading = document.getElementById("loading");
+      loading.style.display = "block";
+      loading.className = "message";
+      loading.textContent = "資料載入中...";
+
       fetch(`${GAS_URL}?action=getEvents`)
-        .then(res => res.json())
+        .then(res => res.text())
+        .then(text => JSON.parse(text))
         .then(res => {
-          document.getElementById("loading").style.display = "none";
+          loading.style.display = "none";
           document.getElementById("eventsContainer").style.display = "block";
 
           const activeContainer = document.getElementById("activeEvents");
@@ -82,44 +107,38 @@
               const card = document.createElement("div");
               card.className = "event-card";
 
-              // 判斷活動狀態 (GMT+7 時間比較)
               if (now < startTime) {
-                // 待開放 (當前時間 < 開始時間)
                 upcomingCount++;
                 card.innerHTML = createCardHTML(event, "upcoming");
                 upcomingContainer.appendChild(card);
               } else if (now >= endTime) {
-                // 已截止 (當前時間 >= 結束時間)
                 endedCount++;
                 card.innerHTML = createCardHTML(event, "ended");
                 endedContainer.appendChild(card);
               } else {
-                // 開放中 (開始時間 <= 當前時間 < 結束時間)
                 activeCount++;
                 card.innerHTML = createCardHTML(event, "active");
                 activeContainer.appendChild(card);
               }
             });
 
-            // 若某區域無活動時顯示提示文字
-            if (activeCount === 0) activeContainer.innerHTML = "<p class='no-data'>目前無開放報名中的活動。</p>";
-            if (upcomingCount === 0) upcomingContainer.innerHTML = "<p class='no-data'>目前無待開放的活動。</p>";
-            if (endedCount === 0) endedContainer.innerHTML = "<p class='no-data'>目前無已截止的活動。</p>";
+            if (activeCount === 0) activeContainer.innerHTML = "<p class='no-data'>目前暫無項目。</p>";
+            if (upcomingCount === 0) upcomingContainer.innerHTML = "<p class='no-data'>目前暫無項目。</p>";
+            if (endedCount === 0) endedContainer.innerHTML = "<p class='no-data'>目前暫無項目。</p>";
 
           } else {
-            activeContainer.innerHTML = "<p class='no-data'>目前尚無任何活動資料。</p>";
-            upcomingContainer.innerHTML = "<p class='no-data'>目前尚無任何活動資料。</p>";
-            endedContainer.innerHTML = "<p class='no-data'>目前尚無任何活動資料。</p>";
+            activeContainer.innerHTML = "<p class='no-data'>目前暫無項目。</p>";
+            upcomingContainer.innerHTML = "<p class='no-data'>目前暫無項目。</p>";
+            endedContainer.innerHTML = "<p class='no-data'>目前暫無項目。</p>";
           }
         })
         .catch(err => {
           console.error(err);
-          document.getElementById("loading").className = "message error";
-          document.getElementById("loading").textContent = "無法載入活動列表，請稍後再試。";
+          loading.className = "message error";
+          loading.textContent = "無法載入活動列表，請稍後再試。";
         });
     }
 
-    // 產生卡片 HTML 結構
     function createCardHTML(event, status) {
       let buttonHTML = "";
       if (status === "active") {
@@ -127,7 +146,7 @@
       } else if (status === "upcoming") {
         buttonHTML = `<button class="btn-disabled" disabled>尚未開放</button>`;
       } else if (status === "ended") {
-        buttonHTML = `<button class="btn-disabled" disabled>報名已截止</button>`;
+        buttonHTML = `<button class="btn-disabled" disabled>已截止</button>`;
       }
 
       const formatTime = (timeStr) => {
@@ -137,12 +156,14 @@
       };
 
       return `
-        <h3>${event["活動名稱"] || '未命名活動'}</h3>
-        <p class="event-id"><strong>活動 ID：</strong> ${event["活動ID"] || ''}</p>
-        <p><strong>說明：</strong> ${event["說明"] || '無'}</p>
-        <p><strong>開始時間：</strong> ${formatTime(event["開始時間"])}</p>
-        <p><strong>結束時間：</strong> ${formatTime(event["結束時間"])}</p>
-        ${buttonHTML}
+        <div>
+          <h3>${event["活動名稱"] || '未命名活動'}</h3>
+          <p class="event-id"><strong>活動 ID：</strong> ${event["活動ID"] || ''}</p>
+          <p><strong>說明：</strong> ${event["說明"] || '無'}</p>
+          <p class="event-time"><strong>開始：</strong> ${formatTime(event["開始時間"])}</p>
+          <p class="event-time"><strong>結束：</strong> ${formatTime(event["結束時間"])}</p>
+        </div>
+        <div>${buttonHTML}</div>
       `;
     }
 

@@ -1,204 +1,174 @@
-/* =================================載入基礎設定================================= */
 * {
   box-sizing: border-box;
 }
 
 body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  background-color: #f0f2f5;
+  background-color: #f7f9fa;
   margin: 0;
-  padding: 20px;
+  padding: 0;
   color: #333;
 }
 
-/* =================================排版與容器================================= */
+/* 頂部導覽列風格 */
+.navbar {
+  background-color: #ffffff;
+  border-bottom: 1px solid #e1e4e8;
+  padding: 12px 25px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.nav-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 18px;
+  font-weight: bold;
+  color: #24292e;
+}
+
+.nav-logo {
+  height: 32px;
+  width: auto;
+  filter: brightness(0); /* 強制轉為黑灰色系會徽 */
+}
+
+.nav-menu {
+  display: flex;
+  gap: 10px;
+}
+
+.nav-btn {
+  background-color: #f1f8ff;
+  color: #0366d6;
+  padding: 6px 14px;
+  border-radius: 6px;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 500;
+  border: 1px solid #c8e1ff;
+  transition: all 0.2s;
+}
+
+.nav-btn:hover {
+  background-color: #0366d6;
+  color: white;
+}
+
+.nav-btn.active {
+  background-color: #0366d6;
+  color: white;
+}
+
+.nav-btn.admin-link {
+  background-color: #f6f8fa;
+  color: #586069;
+  border-color: #e1e4e8;
+}
+
+.nav-btn.admin-link:hover {
+  background-color: #e1e4e8;
+  color: #24292e;
+}
+
+/* 容器與版面 */
 .container {
   max-width: 500px;
-  margin: 20px auto;
+  margin: 30px auto;
   background: #ffffff;
   padding: 30px;
-  border-radius: 12px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+  border-radius: 10px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  border: 1px solid #e1e4e8;
 }
 
 .container.wide {
-  max-width: 950px;
+  max-width: 1000px;
 }
 
-.header {
-  text-align: center;
-  margin-bottom: 25px;
-}
-
-.logo {
-  max-height: 80px;
-  margin-bottom: 10px;
-}
-
-/* =================================導覽與按鈕================================= */
-.nav-links {
-  display: flex;
-  gap: 15px;
+/* 規則說明卡片 */
+.rule-card {
+  background-color: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-left: 4px solid #6c757d;
+  padding: 20px 25px;
+  border-radius: 6px;
   margin-bottom: 20px;
 }
 
-button, 
-.btn-apply, 
-.btn-primary, 
-.btn-secondary, 
-.btn-danger {
-  width: 100%;
-  padding: 12px;
+.rule-card h3 {
+  margin-top: 0;
+  color: #333;
+  font-size: 18px;
+}
+
+.rule-card ul {
+  margin: 0;
+  padding-left: 20px;
+  font-size: 14px;
+  color: #555;
+  line-height: 1.6;
+}
+
+.rule-card li {
+  margin-bottom: 6px;
+}
+
+/* 操作列（提示與重新整理按鈕） */
+.action-bar {
+  background-color: #e8f4fd;
+  border: 1px solid #bbe2ff;
+  padding: 12px 18px;
+  border-radius: 6px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+}
+
+.tip-text {
+  font-size: 14px;
+  color: #004085;
+}
+
+.btn-refresh {
   background-color: #007bff;
   color: white;
   border: none;
-  border-radius: 6px;
-  font-size: 16px;
-  font-weight: bold;
+  padding: 6px 14px;
+  border-radius: 4px;
   cursor: pointer;
-  text-align: center;
-  text-decoration: none;
-  display: inline-block;
-  transition: background 0.2s;
+  font-size: 14px;
+  font-weight: 500;
+  width: auto;
 }
 
-button:hover, .btn-primary:hover {
+.btn-refresh:hover {
   background-color: #0056b3;
 }
 
-button:disabled, .btn-disabled {
-  background-color: #6c757d !important;
-  cursor: not-allowed !important;
-  opacity: 0.7;
-}
-
-.btn-secondary {
-  background-color: #6c757d;
-}
-
-.btn-secondary:hover {
-  background-color: #5a6268;
-}
-
-.btn-danger {
-  background-color: #dc3545;
-}
-
-.btn-danger:hover {
-  background-color: #bd2130;
-}
-
-/* =================================表單控制項================================= */
-.form-group {
-  margin-bottom: 18px;
-}
-
-.form-group label {
-  display: block;
-  margin-bottom: 6px;
-  font-weight: 600;
-  color: #444;
-}
-
-.form-group input, 
-.form-group select, 
-.form-group textarea {
-  width: 100%;
-  padding: 10px 12px;
-  border: 1px solid #ccc;
-  border-radius: 6px;
-  font-size: 15px;
-  outline: none;
-  transition: border-color 0.2s;
-}
-
-.form-group input:focus, 
-.form-group select:focus, 
-.form-group textarea:focus {
-  border-color: #007bff;
-}
-
-.form-row {
-  display: flex;
-  gap: 15px;
-}
-
-.form-group.half {
-  flex: 1;
-}
-
-.input-with-btn {
-  display: flex;
-  gap: 8px;
-}
-
-.input-with-btn input {
-  flex: 1;
-}
-
-.input-with-btn button {
-  width: auto;
-  padding: 0 15px;
-  font-size: 14px;
-  white-space: nowrap;
-  background-color: #17a2b8;
-}
-
-.input-with-btn button:hover {
-  background-color: #138496;
-}
-
-/* =================================提示與訊息================================= */
-.message {
-  padding: 12px;
-  border-radius: 6px;
-  margin-top: 15px;
-  text-align: center;
-  font-size: 14px;
-}
-
-.message.success {
-  background-color: #d4edda;
-  color: #155724;
-  border: 1px solid #c3e6cb;
-}
-
-.message.error {
-  background-color: #f8d7da;
-  color: #721c24;
-  border: 1px solid #f5c6cb;
-}
-
-/* =================================首頁活動列表區塊================================= */
-.event-section {
-  margin-top: 30px;
-}
-
+/* 區段標題 */
 .section-title {
-  padding-bottom: 8px;
-  border-bottom: 2px solid #ddd;
+  font-size: 18px;
   margin-bottom: 15px;
-  font-size: 20px;
+  padding-bottom: 6px;
+  border-bottom: 2px solid #eaecef;
 }
 
-.active-title {
-  color: #28a745;
-  border-bottom-color: #28a745;
-}
+.active-title { color: #28a745; border-bottom-color: #28a745; }
+.upcoming-title { color: #d97706; border-bottom-color: #f59e0b; }
+.ended-title { color: #dc3545; border-bottom-color: #dc3545; }
 
-.upcoming-title {
-  color: #e0a800;
-  border-bottom-color: #ffc107;
-}
-
-.ended-title {
-  color: #dc3545;
-  border-bottom-color: #dc3545;
-}
-
+/* 活動卡片網格 */
 .event-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: 20px;
 }
 
@@ -210,64 +180,92 @@ button:disabled, .btn-disabled {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.03);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.event-card:hover {
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
 }
 
 .event-card h3 {
   margin-top: 0;
-  color: #007bff;
+  color: #0366d6;
+  font-size: 18px;
 }
 
-.event-card .event-id {
-  color: #666;
+.event-id {
+  color: #586069;
+  font-size: 13px;
+  margin-bottom: 8px;
+}
+
+.event-card p {
   font-size: 14px;
+  color: #444;
+  margin: 6px 0;
+}
+
+.event-time {
+  font-size: 13px !important;
+  color: #666 !important;
+}
+
+/* 按鈕樣式 */
+.btn-apply {
+  display: block;
+  width: 100%;
+  padding: 10px;
+  background-color: #28a745;
+  color: white;
+  text-align: center;
+  border-radius: 6px;
+  text-decoration: none;
+  font-weight: bold;
+  margin-top: 15px;
+  transition: background 0.2s;
+}
+
+.btn-apply:hover {
+  background-color: #218838;
+}
+
+.btn-disabled {
+  display: block;
+  width: 100%;
+  padding: 10px;
+  background-color: #e1e4e8 !important;
+  color: #6a737d !important;
+  text-align: center;
+  border-radius: 6px;
+  border: none;
+  font-weight: bold;
+  margin-top: 15px;
+  cursor: not-allowed;
 }
 
 .no-data {
-  color: #777;
+  color: #6a737d;
   font-style: italic;
-  padding: 10px 0;
-  margin: 0;
+  padding: 15px;
+  background: #fff;
+  border: 1px dashed #e1e4e8;
+  border-radius: 6px;
+  text-align: center;
+  grid-column: 1 / -1;
 }
 
-/* =================================後台管理與表格================================= */
-.admin-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-}
-
-.admin-section {
-  background: #f8f9fa; 
-  padding: 20px; 
-  border-radius: 8px; 
-  margin-bottom: 30px; 
-  border: 1px solid #dee2e6;
-}
-
-.table-responsive {
-  overflow-x: auto;
-}
-
-table {
-  width: 100%;
-  border-collapse: collapse;
-  background: white;
-}
-
-th, td {
-  border: 1px solid #dee2e6;
-  padding: 10px;
-  text-align: left;
+.message {
+  padding: 15px;
+  border-radius: 6px;
+  text-align: center;
   font-size: 14px;
+  background: #fff;
+  border: 1px solid #e1e4e8;
 }
 
-th {
-  background-color: #007bff;
-  color: white;
-}
-
-tr:nth-child(even) {
-  background-color: #f8f9fa;
+.message.error {
+  background-color: #ffeef0;
+  color: #cb2431;
+  border-color: #f97583;
 }
