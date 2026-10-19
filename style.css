@@ -14,7 +14,7 @@ body {
 }
 
 /* ==========================================================
-   2. 頂部導覽列 (Navbar) - 放大版型與黑會徽
+   2. 頂部導覽列 (Navbar) - 完美比例與黑會徽
 ========================================================== */
 .navbar {
   background-color: #ffffff;
@@ -46,9 +46,9 @@ body {
   opacity: 0.85;
 }
 
-/* 強制鎖死 Logo 大小並轉為純黑 */
+/* 修正會徽比例：固定高度並自動計算寬度，轉為純黑 */
 .nav-logo {
-  height: 28px !important;
+  height: 30px !important;
   width: auto !important;
   object-fit: contain;
   filter: brightness(0) saturate(100%) !important;
@@ -177,7 +177,8 @@ body {
   border-bottom: 2px solid #eaecef;
 }
 
-.active-title { color: #cf222e; border-bottom-color: #cf222e; }
+/* 開放中的標題線條設定為綠色 */
+.active-title { color: #1a7f37; border-bottom-color: #2da44e; }
 .upcoming-title { color: #d97706; border-bottom-color: #f59e0b; }
 .ended-title { color: #57606a; border-bottom-color: #8c959f; }
 
