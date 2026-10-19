@@ -19,120 +19,118 @@
     </div>
   </header>
 
-  <div class="container wide">
-    <!-- 未登入畫面 -->
-    <div id="loginSection" class="login-card-wrapper">
-      <div class="login-card">
-        <div class="login-icon">🔐</div>
-        <h2>後台管理系統</h2>
-        <p class="login-subtitle">胡志明市臺灣學校學生會 - 發布新活動與報名管理</p>
-        
-        <div class="login-form">
-          <label class="login-label">🔒 管理員身份驗證</label>
-          <input type="password" id="adminPwd" class="login-input" placeholder="請輸入管理員密碼" onkeydown="if(event.key === 'Enter') loginAdmin()">
-          <button id="loginBtn" onclick="loginAdmin()" class="btn-login">登入後台</button>
+  <!-- 未登入畫面 (直接置中顯示，不使用雙重外框) -->
+  <div id="loginSection" class="login-card-wrapper" style="margin-top: 60px;">
+    <div class="login-card">
+      <div class="login-icon">🔐</div>
+      <h2>後台管理系統</h2>
+      <p class="login-subtitle">胡志明市臺灣學校學生會 - 發布新活動與報名管理</p>
+      
+      <div class="login-form">
+        <label class="login-label">🔒 管理員身份驗證</label>
+        <input type="password" id="adminPwd" class="login-input" placeholder="請輸入管理員密碼" onkeydown="if(event.key === 'Enter') loginAdmin()">
+        <button id="loginBtn" onclick="loginAdmin()" class="btn-login">登入後台</button>
+      </div>
+
+      <div id="loginMsg" class="message error" style="display:none; margin-top:15px;"></div>
+    </div>
+    <div class="login-footer" style="margin-top: 25px;">
+      胡志明市臺灣學校學生會 TSSC13TH © 2026 yucheng
+    </div>
+  </div>
+
+  <!-- 已登入後台主畫面 (使用 container wide 確保後台排版寬敞舒適) -->
+  <div id="adminContent" class="container wide" style="display:none; margin-top: 30px;">
+    <!-- 頂部標題與登出列 -->
+    <div class="admin-top-bar">
+      <div>
+        <h2 style="margin: 0; font-size: 22px; color: #1f2328;">TSSC13TH 後台管理系統</h2>
+        <p style="margin: 4px 0 0 0; font-size: 13px; color: #57606a;">胡志明市臺灣學校學生會 - 發布新活動與報名管理</p>
+      </div>
+      <button onclick="logout()" class="btn-secondary" style="background-color: #ffeef0; color: #cf222e; border-color: #ffc1c0; width:auto; padding: 8px 16px;">🚪 登出</button>
+    </div>
+
+    <!-- 上方功能頁籤 (左邊：建立活動，右邊：報名資料) -->
+    <div class="admin-tabs">
+      <button id="tabCreateBtn" class="admin-tab-btn active" onclick="switchTab('create')">➕ 建立新活動</button>
+      <button id="tabListBtn" class="admin-tab-btn" onclick="switchTab('list')">📋 報名者資料查詢</button>
+    </div>
+
+    <!-- 區塊一：建立新活動報名 -->
+    <div id="createSection" class="admin-section">
+      <div class="section-badge-header">
+        <span class="section-tag create-tag">➕ 建立新活動報名</span>
+      </div>
+
+      <form id="createEventForm" onsubmit="createEvent(event)">
+        <div class="form-row">
+          <div class="form-group half">
+            <label for="newEventId">活動 ID *</label>
+            <input type="text" id="newEventId" class="form-control" required placeholder="例如：ACT001">
+          </div>
+          <div class="form-group half">
+            <label for="newEventName">活動名稱 *</label>
+            <input type="text" id="newEventName" class="form-control" required placeholder="例如：學生會迎新晚會">
+          </div>
         </div>
 
-        <div id="loginMsg" class="message error" style="display:none; margin-top:15px;"></div>
+        <div class="form-group">
+          <label for="newEventDesc">活動說明</label>
+          <textarea id="newEventDesc" class="form-control" rows="3" placeholder="活動詳細內容說明..."></textarea>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group half">
+            <label for="newStartTime">開始報名時間 *</label>
+            <input type="datetime-local" id="newStartTime" class="form-control" required>
+          </div>
+          <div class="form-group half">
+            <label for="newEndTime">結束報名時間 *</label>
+            <input type="datetime-local" id="newEndTime" class="form-control" required>
+          </div>
+        </div>
+
+        <button type="submit" class="btn-submit" id="createBtn">送出建立活動</button>
+      </form>
+      <div id="createMsg" class="message" style="display:none;"></div>
+    </div>
+
+    <!-- 區塊二：已報名者資料列表 (預設隱藏，切換頁籤顯示) -->
+    <div id="listSection" class="admin-section" style="display: none;">
+      <div class="admin-header-flex">
+        <span class="section-tag list-tag">📋 已報名者資料列表</span>
+        <button onclick="fetchRegistrations()" class="btn-refresh">🔄 重新整理資料</button>
       </div>
-      <div class="login-footer">
-        胡志明市臺灣學校學生會 TSSC13TH © 2026 yucheng
+
+      <div class="form-group" style="margin-top: 15px;">
+        <label>選擇要查看的活動</label>
+        <select id="selectEvent" class="form-control" onchange="fetchRegistrations()">
+          <option value="">請先選擇活動...</option>
+        </select>
+      </div>
+
+      <div id="regLoading" class="message" style="display: none;">載入報名資料中...</div>
+
+      <div class="table-responsive" style="margin-top: 15px;">
+        <table id="dataTable">
+          <thead>
+            <tr>
+              <th>報名時間</th>
+              <th>姓名</th>
+              <th>班級</th>
+              <th>座號</th>
+              <th>Email</th>
+              <th>備註</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td colspan="6" class="no-data">請先選擇上方活動以檢視報名清單。</td></tr>
+          </tbody>
+        </table>
       </div>
     </div>
 
-    <!-- 已登入後台主畫面 -->
-    <div id="adminContent" style="display:none;">
-      <!-- 頂部標題與登出列 -->
-      <div class="admin-top-bar">
-        <div>
-          <h2 style="margin: 0; font-size: 22px; color: #1f2328;">TSSC13TH 後台管理系統</h2>
-          <p style="margin: 4px 0 0 0; font-size: 13px; color: #57606a;">胡志明市臺灣學校學生會 - 發布新活動與報名管理</p>
-        </div>
-        <button onclick="logout()" class="btn-secondary" style="background-color: #ffeef0; color: #cf222e; border-color: #ffc1c0; width:auto; padding: 8px 16px;">登出</button>
-      </div>
-
-      <!-- 上方功能頁籤 (左邊：建立活動，右邊：報名資料) -->
-      <div class="admin-tabs">
-        <button id="tabCreateBtn" class="admin-tab-btn active" onclick="switchTab('create')">➕ 建立新活動</button>
-        <button id="tabListBtn" class="admin-tab-btn" onclick="switchTab('list')">📋 報名者資料查詢</button>
-      </div>
-
-      <!-- 區塊一：建立新活動報名 -->
-      <div id="createSection" class="admin-section">
-        <div class="section-badge-header">
-          <span class="section-tag create-tag">➕ 建立新活動報名</span>
-        </div>
-
-        <form id="createEventForm" onsubmit="createEvent(event)">
-          <div class="form-row">
-            <div class="form-group half">
-              <label for="newEventId">活動 ID *</label>
-              <input type="text" id="newEventId" class="form-control" required placeholder="例如：ACT001">
-            </div>
-            <div class="form-group half">
-              <label for="newEventName">活動名稱 *</label>
-              <input type="text" id="newEventName" class="form-control" required placeholder="例如：學生會迎新晚會">
-            </div>
-          </div>
-
-          <div class="form-group">
-            <label for="newEventDesc">活動說明</label>
-            <textarea id="newEventDesc" class="form-control" rows="3" placeholder="活動詳細內容說明..."></textarea>
-          </div>
-
-          <div class="form-row">
-            <div class="form-group half">
-              <label for="newStartTime">開始報名時間 *</label>
-              <input type="datetime-local" id="newStartTime" class="form-control" required>
-            </div>
-            <div class="form-group half">
-              <label for="newEndTime">結束報名時間 *</label>
-              <input type="datetime-local" id="newEndTime" class="form-control" required>
-            </div>
-          </div>
-
-          <button type="submit" class="btn-submit" id="createBtn">送出建立活動</button>
-        </form>
-        <div id="createMsg" class="message" style="display:none;"></div>
-      </div>
-
-      <!-- 區塊二：已報名者資料列表 (預設隱藏，切換頁籤顯示) -->
-      <div id="listSection" class="admin-section" style="display: none;">
-        <div class="admin-header-flex">
-          <span class="section-tag list-tag">📋 已報名者資料列表</span>
-          <button onclick="fetchRegistrations()" class="btn-refresh">🔄 重新整理資料</button>
-        </div>
-
-        <div class="form-group" style="margin-top: 15px;">
-          <label>選擇要查看的活動</label>
-          <select id="selectEvent" class="form-control" onchange="fetchRegistrations()">
-            <option value="">請先選擇活動...</option>
-          </select>
-        </div>
-
-        <div id="regLoading" class="message" style="display: none;">載入報名資料中...</div>
-
-        <div class="table-responsive" style="margin-top: 15px;">
-          <table id="dataTable">
-            <thead>
-              <tr>
-                <th>報名時間</th>
-                <th>姓名</th>
-                <th>班級</th>
-                <th>座號</th>
-                <th>Email</th>
-                <th>備註</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr><td colspan="6" class="no-data">請先選擇上方活動以檢視報名清單。</td></tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <p style="text-align: center; margin-top: 30px;"><a href="index.html" class="back-link">← 返回首頁</a></p>
-    </div>
+    <p style="text-align: center; margin-top: 30px;"><a href="index.html" class="back-link">← 返回首頁</a></p>
   </div>
 
   <style>
@@ -147,7 +145,6 @@
       margin-bottom: 20px;
       box-shadow: 0 1px 3px rgba(0,0,0,0.02);
     }
-    /* 頁籤按鈕樣式 */
     .admin-tabs {
       display: flex;
       gap: 10px;
@@ -205,7 +202,6 @@
     const GAS_URL = "https://script.google.com/macros/s/AKfycbzw8vASm3Nm7eIpcQYQ_QBMK4m3j0d9Thcw8N8nWBsuUPJDCsioB_KLErcH1nIP2v0/exec";
     let currentPassword = "";
 
-    // 頁籤切換功能
     function switchTab(tabName) {
       const createSec = document.getElementById("createSection");
       const listSec = document.getElementById("listSection");
@@ -222,7 +218,7 @@
         listSec.style.display = "block";
         tabCreateBtn.className = "admin-tab-btn";
         tabListBtn.className = "admin-tab-btn active";
-        loadAdminEvents(); // 切換到清單時自動重新整理活動下拉選單
+        loadAdminEvents();
       }
     }
 
@@ -249,7 +245,7 @@
           if (res.status === "success") {
             document.getElementById("loginSection").style.display = "none";
             document.getElementById("adminContent").style.display = "block";
-            switchTab('create'); // 預設停留在建立活動頁籤
+            switchTab('create');
           } else {
             loginMsg.textContent = "密碼錯誤，請重新輸入！";
             loginMsg.style.display = "block";
@@ -337,12 +333,11 @@
         password: currentPassword,
         eventId: document.getElementById("newEventId").value.trim(),
         eventName: document.getElementById("newEventName").value.trim(),
-        eventDesc: document.getElementById("newEventDesc").value.trim(), // 統一參數名稱
+        eventDesc: document.getElementById("newEventDesc").value.trim(),
         startTime: document.getElementById("newStartTime").value.replace("T", " "),
         endTime: document.getElementById("newEndTime").value.replace("T", " ")
       };
 
-      // 🛠️ 修正傳輸問題：加入 headers 確保 GAS 正確解析 JSON
       fetch(GAS_URL, {
         method: "POST",
         headers: { "Content-Type": "text/plain;charset=utf-8" },
@@ -355,7 +350,7 @@
           createMsg.className = "message success";
           createMsg.textContent = "活動建立成功！";
           document.getElementById("createEventForm").reset();
-          loadAdminEvents();
+          // 注意：這裡絕對不會呼叫 logout()，密碼和登入狀態會完美保留！
         } else {
           createMsg.className = "message error";
           createMsg.textContent = "建立失敗：" + (res.message || "未知錯誤");
