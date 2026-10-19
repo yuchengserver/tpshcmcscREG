@@ -19,7 +19,7 @@
     </div>
   </header>
 
-  <!-- 未登入畫面 (直接置中顯示，不使用雙重外框) -->
+  <!-- 未登入畫面 -->
   <div id="loginSection" class="login-card-wrapper" style="margin-top: 60px;">
     <div class="login-card">
       <div class="login-icon">🔐</div>
@@ -39,7 +39,7 @@
     </div>
   </div>
 
-  <!-- 已登入後台主畫面 (使用 container wide 確保後台排版寬敞舒適) -->
+  <!-- 已登入後台主畫面 -->
   <div id="adminContent" class="container wide" style="display:none; margin-top: 30px;">
     <!-- 頂部標題與登出列 -->
     <div class="admin-top-bar">
@@ -92,7 +92,7 @@
 
         <button type="submit" class="btn-submit" id="createBtn">送出建立活動</button>
       </form>
-      <div id="createMsg" class="message" style="display:none;"></div>
+      <div id="createMsg" class="message" style="display:none; margin-top: 15px;"></div>
     </div>
 
     <!-- 區塊二：已報名者資料列表 (預設隱藏，切換頁籤顯示) -->
@@ -326,7 +326,8 @@
       const createMsg = document.getElementById("createMsg");
 
       createBtn.disabled = true;
-      createBtn.textContent = "建立中...";
+      createBtn.textContent = "上傳中...";
+      createMsg.style.display = "none";
 
       const payload = {
         action: "createEvent",
@@ -348,19 +349,19 @@
         createMsg.style.display = "block";
         if (res.status === "success") {
           createMsg.className = "message success";
-          createMsg.textContent = "活動建立成功！";
+          createMsg.textContent = "✅ 活動建立成功！";
           document.getElementById("createEventForm").reset();
-          // 注意：這裡絕對不會呼叫 logout()，密碼和登入狀態會完美保留！
+          loadAdminEvents(); // 自動更新下拉選單
         } else {
           createMsg.className = "message error";
-          createMsg.textContent = "建立失敗：" + (res.message || "未知錯誤");
+          createMsg.textContent = "❌ 建立失敗：" + (res.message || "未知錯誤");
         }
       })
       .catch(err => {
         console.error(err);
         createMsg.style.display = "block";
         createMsg.className = "message error";
-        createMsg.textContent = "建立失敗，請檢查網路連線或伺服器回應。";
+        createMsg.textContent = "❌ 建立失敗，請檢查網路連線或伺服器回應。";
       })
       .finally(() => {
         createBtn.disabled = false;
