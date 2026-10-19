@@ -7,73 +7,90 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div class="container">
-    <div class="header">
-      <img src="tpshcmcsc.png" alt="TSSC Logo" class="logo">
-      <h2>TSSC13TH 活動報名表單</h2>
+  <!-- 頂部導覽列 (僅顯示首頁與通知) -->
+  <header class="navbar">
+    <div class="nav-brand">
+      <img src="tpshcmcsc.png" alt="TSSC Logo" class="nav-logo">
+      <span>TSSC13TH 活動報名專區</span>
+    </div>
+    <div class="nav-menu">
+      <a href="index.html" class="nav-btn">首頁與通知</a>
+    </div>
+  </header>
+
+  <div class="container signup-container">
+    <p style="margin-bottom: 15px;"><a href="index.html" class="back-link">← 返回提案列表</a></p>
+
+    <div class="event-detail-box">
+      <span class="badge badge-active">💡 意見徵集</span>
+      <h2 id="targetEventTitle" class="detail-title">載入活動名稱中...</h2>
+      <p id="targetEventTime" class="detail-time">⏰ 時間：載入中...</p>
+      <p id="targetEventDesc" class="detail-desc"></p>
     </div>
 
-    <form id="signupForm">
-      <div class="form-group">
-        <label for="eventId">選擇活動 / 活動 ID *</label>
-        <select id="eventId" required>
-          <option value="">載入活動中...</option>
+    <form id="signupForm" style="margin-top: 25px;">
+      <div class="form-group" style="display:none;">
+        <label for="eventId">選擇活動 *</label>
+        <select id="eventId" class="form-control" required>
+          <option value="">載入中...</option>
         </select>
       </div>
 
       <div class="form-group">
-        <label for="name">姓名 *</label>
-        <input type="text" id="name" required placeholder="例如：張小明">
+        <label for="note">請留下您的寶貴意見： *</label>
+        <textarea id="note" class="form-control" rows="4" required placeholder="請詳細說明您的想法或建議..."></textarea>
       </div>
 
       <div class="form-row">
         <div class="form-group half">
-          <label for="className">班級 *</label>
-          <input type="text" id="className" required placeholder="例如：高二1班">
+          <label for="name">姓名 *</label>
+          <input type="text" id="name" class="form-control" required placeholder="例如：張小明">
         </div>
         <div class="form-group half">
-          <label for="seatNumber">座號 *</label>
-          <input type="text" id="seatNumber" required placeholder="例如：15">
+          <label for="className">班級 *</label>
+          <input type="text" id="className" class="form-control" required placeholder="例如：高二1班">
         </div>
       </div>
 
       <div class="form-group">
-        <label for="email">學校信箱 (Email) *</label>
+        <label for="seatNumber">座號 *</label>
+        <input type="text" id="seatNumber" class="form-control" required placeholder="例如：15">
+      </div>
+
+      <div class="form-group">
+        <label for="email">學校官方電子信箱 (@tshcmc.edu.vn) *</label>
         <div class="input-with-btn">
-          <input type="email" id="email" required placeholder="7位學號@tshcmc.edu.vn" pattern="^\d{7}@tshcmc\.edu\.vn$" title="請輸入正確的學校信箱格式：7位學號@tshcmc.edu.vn">
-          <button type="button" id="sendCodeBtn" onclick="sendVerificationCode()">取得驗證碼</button>
+          <input type="email" id="email" class="form-control" required placeholder="s123456@tshcmc.edu.vn" pattern="^\d{7}@tshcmc\.edu\.vn$">
+          <button type="button" id="sendCodeBtn" class="btn-verify" onclick="sendVerificationCode()">發送驗證碼</button>
         </div>
-        <small style="color: #666; font-size: 12px;">格式範例：1234567@tshcmc.edu.vn</small>
       </div>
 
       <div class="form-group">
-        <label for="code">信箱驗證碼 *</label>
-        <input type="text" id="code" required placeholder="請輸入 6 位數驗證碼" maxlength="6">
+        <label for="code">信箱驗證碼 (6 位數字) *</label>
+        <input type="text" id="code" class="form-control" required placeholder="請輸入 6 位數驗證碼" maxlength="6">
+        <small class="hint-text">請輸入寄送至您學校信箱中的 6 位數一次性驗證碼（有效期限 5 分鐘，每人每天最多發送 3 次）。</small>
       </div>
 
-      <div class="form-group">
-        <label for="note">備註</label>
-        <textarea id="note" rows="3" placeholder="其他說明或特殊需求"></textarea>
-      </div>
-
-      <button type="submit" id="submitBtn">確認並送出報名</button>
+      <button type="submit" id="submitBtn" class="btn-submit">確認並送出</button>
     </form>
 
     <div id="message" class="message" style="display:none;"></div>
-    <p style="text-align: center; margin-top: 15px;"><a href="index.html">← 返回活動列表</a></p>
+
+    <div class="login-footer" style="margin-top: 35px; text-align: center;">
+      胡志明市臺灣學校學生會 TSSC13TH © 2026 yucheng
+    </div>
   </div>
 
   <script>
     const GAS_URL = "https://script.google.com/macros/s/AKfycbzw8vASm3Nm7eIpcQYQ_QBMK4m3j0d9Thcw8N8nWBsuUPJDCsioB_KLErcH1nIP2v0/exec";
     let countdownTimer = null;
+    let currentEventData = null; // 儲存當前選取的活動數據
 
-    // 檢查信箱是否符合學校格式 (7位學號@tshcmc.edu.vn)
     function validateSchoolEmail(email) {
       const regex = /^\d{7}@tshcmc\.edu\.vn$/i;
       return regex.test(email);
     }
 
-    // 取得 GMT+7 時間
     function getNowGMT7() {
       const now = new Date();
       const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
@@ -85,7 +102,8 @@
       const targetEventId = urlParams.get('eventId');
 
       fetch(`${GAS_URL}?action=getEvents`)
-        .then(res => res.json())
+        .then(res => res.text())
+        .then(text => JSON.parse(text))
         .then(res => {
           const select = document.getElementById("eventId");
           select.innerHTML = '<option value="">-- 請選擇報名活動 --</option>';
@@ -101,29 +119,22 @@
               if (isActive || item["活動ID"] === targetEventId) {
                 const opt = document.createElement("option");
                 opt.value = item["活動ID"];
-                opt.textContent = `${item["活動名稱"]} (${item["活動ID"]})${!isActive ? ' [已關閉/未開放]' : ''}`;
+                opt.textContent = `${item["活動名稱"]} (${item["活動ID"]})`;
                 
                 if (targetEventId && item["活動ID"] === targetEventId) {
                   opt.selected = true;
+                  currentEventData = item; // 記住當前活動資料
+                  document.getElementById("targetEventTitle").textContent = item["活動名稱"];
+                  document.getElementById("targetEventDesc").textContent = item["說明"] || "";
+                  document.getElementById("targetEventTime").textContent = `⏰ 開始時間：${new Date(item["開始時間"]).toLocaleString()} | ⌛ 截止時間：${new Date(item["結束時間"]).toLocaleString()}`;
                 }
                 select.appendChild(opt);
               }
             });
-
-            if (select.options.length === 1) {
-              select.innerHTML = '<option value="">目前無開放可報名的活動</option>';
-            }
-          } else {
-            select.innerHTML = '<option value="">目前尚無活動資料</option>';
           }
-        })
-        .catch(err => {
-          console.error("載入活動失敗:", err);
-          document.getElementById("eventId").innerHTML = '<option value="">載入活動失敗，請重新整理</option>';
         });
     };
 
-    // 發送驗證碼
     function sendVerificationCode() {
       const email = document.getElementById("email").value.trim();
       const sendBtn = document.getElementById("sendCodeBtn");
@@ -149,23 +160,21 @@
         if (res.status === "success") {
           msgDiv.className = "message success";
           msgDiv.textContent = res.message;
-          startCountdown(120); // 2 分鐘冷卻倒數
+          startCountdown(120);
         } else {
           msgDiv.className = "message error";
           msgDiv.textContent = res.message;
           sendBtn.disabled = false;
-          sendBtn.textContent = "取得驗證碼";
+          sendBtn.textContent = "發送驗證碼";
         }
       })
       .catch(err => {
-        console.error(err);
-        alert("發送失敗，請檢查網路連線或稍後再試！");
+        alert("發送失敗，請稍後再試！");
         sendBtn.disabled = false;
-        sendBtn.textContent = "取得驗證碼";
+        sendBtn.textContent = "發送驗證碼";
       });
     }
 
-    // 按鈕倒數計時器
     function startCountdown(seconds) {
       const sendBtn = document.getElementById("sendCodeBtn");
       let remain = seconds;
@@ -175,7 +184,7 @@
         if (remain <= 0) {
           clearInterval(countdownTimer);
           sendBtn.disabled = false;
-          sendBtn.textContent = "取得驗證碼";
+          sendBtn.textContent = "發送驗證碼";
         } else {
           sendBtn.textContent = `${remain} 秒後重新發送`;
           remain--;
@@ -183,9 +192,21 @@
       }, 1000);
     }
 
-    // 送出表單
     document.getElementById("signupForm").addEventListener("submit", function(e) {
       e.preventDefault();
+
+      // 🔍 提交前的時間攔截檢查
+      if (currentEventData && currentEventData["結束時間"]) {
+        const now = getNowGMT7();
+        const endTime = new Date(currentEventData["結束時間"]);
+
+        if (now >= endTime) {
+          alert("⚠️ 很抱歉，該活動報名時間已截止！系統將自動為您跳轉回首頁。");
+          window.location.href = "index.html";
+          return;
+        }
+      }
+
       const submitBtn = document.getElementById("submitBtn");
       const msgDiv = document.getElementById("message");
 
@@ -193,7 +214,7 @@
       const email = document.getElementById("email").value.trim();
 
       if (!eventId) {
-        alert("請選擇要報名的活動！");
+        alert("無效的活動項目！");
         return;
       }
 
@@ -203,7 +224,7 @@
       }
 
       submitBtn.disabled = true;
-      submitBtn.textContent = "資料驗證中...";
+      submitBtn.textContent = "資料提交中...";
 
       const payload = {
         action: "submit",
@@ -235,14 +256,13 @@
         }
       })
       .catch(err => {
-        console.error(err);
         msgDiv.style.display = "block";
         msgDiv.className = "message error";
-        msgDiv.textContent = "提交失敗，請檢查網路。";
+        msgDiv.textContent = "提交失敗，請檢查網路連線。";
       })
       .finally(() => {
         submitBtn.disabled = false;
-        submitBtn.textContent = "確認並送出報名";
+        submitBtn.textContent = "確認並送出";
       });
     });
   </script>

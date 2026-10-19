@@ -1,3 +1,6 @@
+/* ==========================================================
+   1. 基礎設定與重置
+========================================================== */
 * {
   box-sizing: border-box;
 }
@@ -7,19 +10,21 @@ body {
   background-color: #f7f9fa;
   margin: 0;
   padding: 0;
-  color: #333;
+  color: #1f2328;
 }
 
-/* 頂部導覽列固定橫向排版 */
+/* ==========================================================
+   2. 頂部導覽列 (Navbar) - 完美 1:1 尺寸與黑會徽
+========================================================== */
 .navbar {
   background-color: #ffffff;
   border-bottom: 1px solid #e1e4e8;
-  padding: 12px 30px;
+  padding: 12px 40px;
   display: flex !important;
   flex-direction: row !important;
   justify-content: space-between !important;
   align-items: center !important;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+  box-shadow: 0 1px 2px rgba(0,0,0,0.02);
   position: sticky;
   top: 0;
   z-index: 1000;
@@ -31,64 +36,63 @@ body {
   align-items: center !important;
   gap: 12px;
   font-size: 18px;
-  font-weight: bold;
-  color: #24292e;
+  font-weight: 700;
+  color: #1b1f23;
 }
 
-/* 嚴格鎖死 Logo 大小，避免放大跑版 */
+/* 強制鎖死 Logo 大小並轉為純黑 */
 .nav-logo {
-  height: 28px !important;
+  height: 24px !important;
   width: auto !important;
   object-fit: contain;
+  filter: brightness(0) saturate(100%) !important;
 }
 
 .nav-menu {
   display: flex !important;
   flex-direction: row !important;
-  gap: 10px;
+  gap: 12px;
 }
 
 .nav-btn {
-  background-color: #f1f8ff;
-  color: #0366d6;
-  padding: 6px 14px;
+  background-color: transparent;
+  color: #586069;
+  padding: 8px 16px;
   border-radius: 6px;
   text-decoration: none;
   font-size: 14px;
   font-weight: 500;
-  border: 1px solid #c8e1ff;
   transition: all 0.2s;
 }
 
-.nav-btn:hover {
-  background-color: #0366d6;
-  color: white;
-}
-
-.nav-btn.active {
-  background-color: #0366d6;
-  color: white;
+.nav-btn:hover, .nav-btn.active {
+  background-color: #f0f1f3;
+  color: #0969da;
+  font-weight: 600;
 }
 
 .nav-btn.admin-link {
   background-color: #f6f8fa;
   color: #586069;
-  border-color: #e1e4e8;
+  border: 1px solid #e1e4e8;
 }
 
-.nav-btn.admin-link:hover {
-  background-color: #e1e4e8;
-  color: #24292e;
+.nav-btn.admin-link:hover, .nav-btn.admin-link.active {
+  background-color: #f0f1f3;
+  color: #1b1f23;
+  font-weight: 600;
 }
 
-/* 內容容器 */
+/* ==========================================================
+   3. 通用容器與規則提示卡片
+========================================================== */
 .container {
-  max-width: 500px;
-  margin: 30px auto;
+  max-width: 550px;
+  margin: 35px auto;
   background: #ffffff;
-  padding: 30px;
-  border-radius: 8px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  padding: 35px;
+  border-radius: 12px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.03);
   border: 1px solid #e1e4e8;
 }
 
@@ -96,19 +100,18 @@ body {
   max-width: 1000px;
 }
 
-/* 規則說明卡片 */
 .rule-card {
   background-color: #f8f9fa;
   border: 1px solid #e9ecef;
-  border-left: 4px solid #6c757d;
-  padding: 20px 25px;
-  border-radius: 6px;
-  margin-bottom: 20px;
+  border-left: 4px solid #0969da;
+  padding: 22px 25px;
+  border-radius: 8px;
+  margin-bottom: 25px;
 }
 
 .rule-card h3 {
   margin-top: 0;
-  color: #333;
+  color: #1f2328;
   font-size: 18px;
 }
 
@@ -116,7 +119,7 @@ body {
   margin: 0;
   padding-left: 20px;
   font-size: 14px;
-  color: #555;
+  color: #57606a;
   line-height: 1.6;
 }
 
@@ -124,12 +127,12 @@ body {
   margin-bottom: 6px;
 }
 
-/* 操作列 */
+/* 提示與操作列 */
 .action-bar {
-  background-color: #e8f4fd;
-  border: 1px solid #bbe2ff;
-  padding: 12px 18px;
-  border-radius: 6px;
+  background-color: #ddf4ff;
+  border: 1px solid #54aef5;
+  padding: 12px 20px;
+  border-radius: 8px;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -138,36 +141,39 @@ body {
 
 .tip-text {
   font-size: 14px;
-  color: #004085;
+  color: #0969da;
+  font-weight: 500;
 }
 
 .btn-refresh {
-  background-color: #007bff;
+  background-color: #0969da;
   color: white;
   border: none;
-  padding: 6px 14px;
-  border-radius: 4px;
+  padding: 7px 15px;
+  border-radius: 6px;
   cursor: pointer;
-  font-size: 14px;
-  font-weight: 500;
+  font-size: 13px;
+  font-weight: 600;
   width: auto;
 }
 
 .btn-refresh:hover {
-  background-color: #0056b3;
+  background-color: #0451a5;
 }
 
-/* 區段標題 */
+/* ==========================================================
+   4. 首頁活動區段與卡片設計
+========================================================== */
 .section-title {
   font-size: 18px;
-  margin-bottom: 15px;
-  padding-bottom: 6px;
+  margin-bottom: 18px;
+  padding-bottom: 8px;
   border-bottom: 2px solid #eaecef;
 }
 
-.active-title { color: #28a745; border-bottom-color: #28a745; }
+.active-title { color: #cf222e; border-bottom-color: #cf222e; }
 .upcoming-title { color: #d97706; border-bottom-color: #f59e0b; }
-.ended-title { color: #dc3545; border-bottom-color: #dc3545; }
+.ended-title { color: #57606a; border-bottom-color: #8c959f; }
 
 .event-grid {
   display: grid;
@@ -176,100 +182,370 @@ body {
 }
 
 .event-card {
-  border: 1px solid #e1e4e8;
-  border-radius: 8px;
-  padding: 20px;
-  background-color: #fff;
+  background: #ffffff;
+  border: 1px solid #d0d7de;
+  border-radius: 10px;
+  padding: 22px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.02);
 }
 
-.event-card h3 {
-  margin-top: 0;
-  color: #0366d6;
-  font-size: 18px;
+.card-title {
+  margin: 0 0 10px 0;
+  font-size: 20px;
+  color: #1f2328;
+  font-weight: 700;
 }
 
-.event-id {
-  color: #586069;
-  font-size: 13px;
-  margin-bottom: 8px;
-}
-
-.event-card p {
+.card-desc {
   font-size: 14px;
-  color: #444;
-  margin: 6px 0;
+  color: #57606a;
+  margin-bottom: 15px;
+  line-height: 1.5;
 }
 
-.event-time {
-  font-size: 13px !important;
-  color: #666 !important;
+.card-time-box {
+  font-size: 12px;
+  color: #8c959f;
+  margin-bottom: 15px;
 }
 
-/* 按鈕樣式 */
-.btn-apply {
+.btn-card-action {
   display: block;
   width: 100%;
-  padding: 10px;
-  background-color: #28a745;
-  color: white;
+  padding: 11px;
   text-align: center;
   border-radius: 6px;
+  font-weight: 700;
+  font-size: 14px;
   text-decoration: none;
-  font-weight: bold;
-  margin-top: 15px;
+  box-sizing: border-box;
 }
 
-.btn-apply:hover {
-  background-color: #218838;
+.btn-card-active {
+  background-color: #121826;
+  color: #ffffff;
+  transition: background-color 0.2s;
 }
 
-.btn-disabled {
-  display: block;
-  width: 100%;
-  padding: 10px;
-  background-color: #e1e4e8 !important;
-  color: #6a737d !important;
-  text-align: center;
-  border-radius: 6px;
-  border: none;
-  font-weight: bold;
-  margin-top: 15px;
+.btn-card-active:hover {
+  background-color: #1f2937;
+}
+
+.btn-card-disabled {
+  background-color: #f6f8fa;
+  color: #8c959f;
+  border: 1px solid #d0d7de;
   cursor: not-allowed;
 }
 
-.no-data {
-  color: #6a737d;
-  font-style: italic;
-  padding: 15px;
-  background: #fff;
-  border: 1px dashed #e1e4e8;
-  border-radius: 6px;
+/* ==========================================================
+   5. 後台管理員登入卡片專用樣式
+========================================================== */
+.login-card-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin-top: 50px;
+  padding: 0 20px;
+}
+
+.login-card {
+  background: #ffffff;
+  width: 100%;
+  max-width: 440px;
+  padding: 35px 30px 40px 30px;
+  border-radius: 12px;
+  border: 1px solid #e1e4e8;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.03);
   text-align: center;
-  grid-column: 1 / -1;
+}
+
+.login-icon {
+  font-size: 38px;
+  margin-bottom: 10px;
+}
+
+.login-card h2 {
+  margin: 5px 0 8px 0;
+  font-size: 22px;
+  color: #1f2328;
+  font-weight: 700;
+}
+
+.login-subtitle {
+  color: #6e7781;
+  font-size: 13px;
+  margin-top: 0;
+  margin-bottom: 25px;
+}
+
+.login-form {
+  text-align: left;
+}
+
+.login-label {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  color: #24292f;
+  margin-bottom: 8px;
+}
+
+.login-input {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid #d0d7de;
+  border-radius: 6px;
+  font-size: 14px;
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color 0.2s;
+  margin-bottom: 16px;
+}
+
+.login-input:focus {
+  border-color: #0969da;
+  box-shadow: 0 0 0 3px rgba(9,105,218,0.15);
+}
+
+.btn-login {
+  width: 100%;
+  padding: 11px;
+  background-color: #121826;
+  color: #ffffff;
+  border: none;
+  border-radius: 6px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.btn-login:hover {
+  background-color: #1f2937;
+}
+
+.login-footer {
+  margin-top: 35px;
+  font-size: 13px;
+  color: #8c959f;
+  text-align: center;
+}
+
+/* ==========================================================
+   6. 表單、按鈕與表格樣式
+========================================================== */
+.admin-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.admin-section {
+  background: #ffffff;
+  padding: 22px;
+  border-radius: 8px;
+  margin-bottom: 25px;
+  border: 1px solid #e1e4e8;
+}
+
+.form-group {
+  margin-bottom: 18px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 700;
+  font-size: 14px;
+  color: #1f2328;
+}
+
+.form-control {
+  width: 100%;
+  padding: 11px 14px;
+  border: 1px solid #d0d7de;
+  border-radius: 6px;
+  font-size: 14px;
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color 0.2s;
+}
+
+.form-control:focus {
+  border-color: #0969da;
+  box-shadow: 0 0 0 3px rgba(9,105,218,0.15);
+}
+
+.form-row {
+  display: flex;
+  gap: 15px;
+}
+
+.form-group.half {
+  flex: 1;
+}
+
+.input-with-btn {
+  display: flex;
+  gap: 10px;
+}
+
+.btn-verify {
+  background-color: #0969da;
+  color: white;
+  border: none;
+  padding: 0 18px;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.btn-verify:hover {
+  background-color: #0451a5;
+}
+
+.btn-verify:disabled {
+  background-color: #8c959f;
+  cursor: not-allowed;
+}
+
+.hint-text {
+  display: block;
+  margin-top: 6px;
+  color: #6e7781;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.btn-submit {
+  width: 100%;
+  padding: 12px;
+  background-color: #121826;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  margin-top: 15px;
+}
+
+.btn-submit:hover {
+  background-color: #1f2937;
+}
+
+.btn-primary { 
+  background-color: #0969da; 
+  color: white; 
+  width: 100%; 
+  padding: 10px 16px; 
+  border-radius: 6px; 
+  font-weight: 600; 
+  border: none;
+  cursor: pointer;
+}
+.btn-primary:hover { background-color: #0451a5; }
+
+.btn-secondary { 
+  background-color: #f6f8fa; 
+  color: #24292f; 
+  border: 1px solid #d0d7de; 
+  padding: 8px 15px;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.btn-secondary:hover { background-color: #f3f4f6; }
+
+.btn-danger { 
+  background-color: #cf222e; 
+  color: white; 
+  border: none;
+  padding: 8px 15px;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.btn-danger:hover { background-color: #a40e26; }
+
+.table-responsive {
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+}
+
+th, td {
+  border: 1px solid #d0d7de;
+  padding: 10px;
+  text-align: left;
+  font-size: 14px;
+}
+
+th {
+  background-color: #f6f8fa;
+  color: #24292f;
 }
 
 .message {
-  padding: 15px;
+  padding: 12px;
   border-radius: 6px;
+  margin-top: 15px;
   text-align: center;
   font-size: 14px;
-  background: #fff;
-  border: 1px solid #e1e4e8;
 }
 
 .message.error {
   background-color: #ffeef0;
-  color: #cb2431;
-  border-color: #f97583;
+  color: #cf222e;
+  border: 1px solid #ffabf1;
 }
-/* 強制將會徽轉為純黑色 */
-.nav-logo {
-  height: 28px !important;
-  width: auto !important;
-  object-fit: contain;
-  filter: brightness(0) saturate(100%) !important;
+
+.message.success {
+  background-color: #dafbe1;
+  color: #1a7f37;
+  border: 1px solid #4ac26b;
+}
+
+.back-link {
+  color: #0969da;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.back-link:hover {
+  text-decoration: underline;
+}
+
+.badge {
+  font-size: 12px;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-weight: 600;
+  display: inline-block;
+}
+
+.badge-active { background-color: #fff8c5; color: #9a6700; }
+
+.no-data {
+  color: #6e7781;
+  font-style: italic;
+  padding: 15px;
+  background: #fff;
+  border: 1px dashed #d0d7de;
+  border-radius: 6px;
+  text-align: center;
+  grid-column: 1 / -1;
 }

@@ -7,16 +7,15 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <!-- 頂部導覽列 -->
+  <!-- 頂部導覽列 (已移除報名按鈕) -->
   <header class="navbar">
     <div class="nav-brand">
       <img src="tpshcmcsc.png" alt="TSSC Logo" class="nav-logo">
       <span>TSSC13TH 活動報名專區</span>
     </div>
     <div class="nav-menu">
-      <a href="index.html" class="nav-btn active">首頁與活動</a>
-      <a href="signup.html" class="nav-btn">立即報名</a>
-      <a href="admin.html" class="nav-btn admin-link">管理員後台</a>
+      <a href="index.html" class="nav-btn active">首頁與通知</a>
+      <a href="admin.html" class="nav-btn admin-link">⚙️ 管理員後台</a>
     </div>
   </header>
 
@@ -34,28 +33,35 @@
 
     <!-- 重新整理與提示列 -->
     <div class="action-bar">
-      <span class="tip-text">💡 提示：本平台採用實名驗證，報名時請使用學校信箱（@tshcmc.edu.vn）。</span>
-      <button onclick="fetchEvents()" class="btn-refresh">重新整理</button>
+      <span class="tip-text">💡 提醒：本平台採用實名驗證，報名或提交意見時請使用學校信箱（@tshcmc.edu.vn）。</span>
+      <button onclick="fetchEvents()" class="btn-refresh">🔄 重新整理</button>
     </div>
 
     <div id="loading" class="message">資料載入中...</div>
 
     <!-- 三個活動分區 -->
     <div id="eventsContainer" style="display: none;">
+      <!-- 1. 開放報名中 -->
       <section class="event-section">
         <h2 class="section-title active-title">📌 目前開放中的項目</h2>
         <div id="activeEvents" class="event-grid"></div>
       </section>
 
+      <!-- 2. 待開放 -->
       <section class="event-section" style="margin-top: 35px;">
         <h2 class="section-title upcoming-title">⏳ 即將開始 / 預告中的項目</h2>
         <div id="upcomingEvents" class="event-grid"></div>
       </section>
 
+      <!-- 3. 已截止 -->
       <section class="event-section" style="margin-top: 35px;">
         <h2 class="section-title ended-title">📁 已截止的項目</h2>
         <div id="endedEvents" class="event-grid"></div>
       </section>
+    </div>
+
+    <div class="login-footer" style="margin-top: 40px; text-align: center;">
+      胡志明市臺灣學校學生會 TSSC13TH © 2026 yucheng
     </div>
   </div>
 
@@ -127,19 +133,12 @@
         .catch(err => {
           console.error(err);
           loading.className = "message error";
-          loading.textContent = "系統連線異常，無法載入活動列表。";
+          loading.textContent = "無法載入活動列表，請檢查網路連線！";
         });
     }
 
     function createCardHTML(event, status) {
       let buttonHTML = "";
-      if (status === "active") {
-        buttonHTML = `<a href="signup.html?eventId=${encodeURIComponent(event["活動ID"] || '')}" class="btn-apply">立即報名</a>`;
-      } else if (status === "upcoming") {
-        buttonHTML = `<button class="btn-disabled" disabled>尚未開放</button>`;
-      } else if (status === "ended") {
-        buttonHTML = `<button class="btn-disabled" disabled>已截止</button>`;
-      }
 
       const formatTime = (timeStr) => {
         if (!timeStr) return '未定';
@@ -147,15 +146,25 @@
         return isNaN(d.getTime()) ? timeStr : d.toLocaleString("zh-TW", { timeZone: "Asia/Ho_Chi_Minh" });
       };
 
+      if (status === "active") {
+        buttonHTML = `<a href="signup.html?eventId=${encodeURIComponent(event["活動ID"] || '')}" class="btn-card-action btn-card-active">👉 前往報名 / 提交意見</a>`;
+      } else if (status === "upcoming") {
+        buttonHTML = `<button class="btn-card-action btn-card-disabled" disabled>尚未開放</button>`;
+      } else if (status === "ended") {
+        buttonHTML = `<button class="btn-card-action btn-card-disabled" disabled>報名已截止</button>`;
+      }
+
       return `
-        <div>
-          <h3>${event["活動名稱"] || '未命名活動'}</h3>
-          <p class="event-id"><strong>活動 ID：</strong> ${event["活動ID"] || ''}</p>
-          <p><strong>說明：</strong> ${event["說明"] || '無'}</p>
-          <p class="event-time"><strong>開始：</strong> ${formatTime(event["開始時間"])}</p>
-          <p class="event-time"><strong>結束：</strong> ${formatTime(event["結束時間"])}</p>
+        <div class="card-body">
+          <h3 class="card-title">${event["活動名稱"] || '未命名活動'}</h3>
+          <p class="card-desc">${event["說明"] || '無說明'}</p>
+          <div class="card-time-box">
+            <span>⏰ 時間：${formatTime(event["開始時間"])} ~ ${formatTime(event["結束時間"])}</span>
+          </div>
         </div>
-        <div>${buttonHTML}</div>
+        <div class="card-footer">
+          ${buttonHTML}
+        </div>
       `;
     }
 

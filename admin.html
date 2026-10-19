@@ -7,29 +7,48 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <!-- 登入卡片 -->
-  <div id="loginBox" class="container">
-    <div class="header">
-      <img src="tpshcmcsc.png" alt="TSSC Logo" class="logo">
-      <h2>管理員登入</h2>
+  <!-- 頂部導覽列 -->
+  <header class="navbar">
+    <div class="nav-brand">
+      <img src="tpshcmcsc.png" alt="TSSC Logo" class="nav-logo">
+      <span>TSSC13TH 活動報名專區</span>
     </div>
-    <div class="form-group">
-      <label for="adminPwd">請輸入後台密碼</label>
-      <input type="password" id="adminPwd" placeholder="請輸入密碼">
+    <div class="nav-menu">
+      <a href="index.html" class="nav-btn">首頁與通知</a>
+      <a href="signup.html" class="nav-btn">立即報名</a>
+      <a href="admin.html" class="nav-btn admin-link active">⚙️ 管理員後台</a>
     </div>
-    <button onclick="loginAdmin()">登入</button>
-    <div id="loginMsg" class="message error" style="display:none; margin-top:15px;"></div>
+  </header>
+
+  <!-- 登入卡片區塊 -->
+  <div id="loginBox" class="login-card-wrapper">
+    <div class="login-card">
+      <div class="login-icon">⚙️</div>
+      <h2>後台管理系統</h2>
+      <p class="login-subtitle">胡志明市臺灣學校學生會 - 發布新活動與報名管理</p>
+      
+      <div class="login-form">
+        <label class="login-label">🔒 管理員身份驗證</label>
+        <input type="password" id="adminPwd" class="login-input" placeholder="請輸入管理員密碼">
+        <button onclick="loginAdmin()" class="btn-login">登入後台</button>
+      </div>
+
+      <div id="loginMsg" class="message error" style="display:none; margin-top:15px;"></div>
+    </div>
+    <div class="login-footer">
+      胡志明市臺灣學校學生會 TSSC13TH © 2026 yucheng
+    </div>
   </div>
 
-  <!-- 後台主要內容 -->
-  <div id="adminContent" class="container wide" style="display:none;">
+  <!-- 後台主體區塊 (登入成功後顯示) -->
+  <div id="adminContent" class="container wide" style="display:none; margin-top: 30px;">
     <div class="admin-header">
       <h2>TSSC13TH 後台管理系統</h2>
       <button onclick="logout()" class="btn-danger" style="width:auto; display:inline-block;">登出</button>
     </div>
 
     <!-- 區塊一：建立新活動 -->
-    <div class="admin-section" style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 30px; border: 1px solid #dee2e6;">
+    <div class="admin-section">
       <h3>➕ 建立新活動報名</h3>
       <form id="createEventForm" onsubmit="createEvent(event)">
         <div class="form-row">
@@ -123,7 +142,7 @@
           if (res.status === "auth_error") {
             loginMsg.textContent = "密碼錯誤，請重新輸入！";
             loginMsg.style.display = "block";
-            document.getElementById("loginBox").style.display = "block";
+            document.getElementById("loginBox").style.display = "flex";
             document.getElementById("adminContent").style.display = "none";
             return;
           }
@@ -210,7 +229,7 @@
     function logout() {
       currentPassword = "";
       document.getElementById("adminPwd").value = "";
-      document.getElementById("loginBox").style.display = "block";
+      document.getElementById("loginBox").style.display = "flex";
       document.getElementById("adminContent").style.display = "none";
       document.getElementById("loginMsg").style.display = "none";
     }
