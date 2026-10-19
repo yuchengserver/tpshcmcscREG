@@ -48,8 +48,9 @@ body {
 
 /* 修正會徽比例：固定高度並自動計算寬度，轉為純黑 */
 /* 調整會徽大小與比例，與公投專區 1:1 對齊 */
+/* 修正會徽大小：調整為 36px，與標題文字達到完美視覺平衡 */
 .nav-logo {
-  height: 22px !important;
+  height: 36px !important;
   width: auto !important;
   object-fit: contain;
   filter: brightness(0) saturate(100%) !important;
