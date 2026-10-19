@@ -29,7 +29,6 @@
         
         <div class="login-form">
           <label class="login-label">🔒 管理員身份驗證</label>
-          <!-- 支援 Enter 鍵直接觸發登入 -->
           <input type="password" id="adminPwd" class="login-input" placeholder="請輸入管理員密碼" onkeydown="if(event.key === 'Enter') loginAdmin()">
           <button id="loginBtn" onclick="loginAdmin()" class="btn-login">登入後台</button>
         </div>
@@ -49,11 +48,17 @@
           <h2 style="margin: 0; font-size: 22px; color: #1f2328;">TSSC13TH 後台管理系統</h2>
           <p style="margin: 4px 0 0 0; font-size: 13px; color: #57606a;">胡志明市臺灣學校學生會 - 發布新活動與報名管理</p>
         </div>
-        <button onclick="logout()" class="btn-secondary" style="background-color: #ffeef0; color: #cf222e; border-color: #ffc1c0; width:auto; padding: 8px 16px;">🚪 登出</button>
+        <button onclick="logout()" class="btn-secondary" style="background-color: #ffeef0; color: #cf222e; border-color: #ffc1c0; width:auto; padding: 8px 16px;">登出</button>
+      </div>
+
+      <!-- 上方功能頁籤 (左邊：建立活動，右邊：報名資料) -->
+      <div class="admin-tabs">
+        <button id="tabCreateBtn" class="admin-tab-btn active" onclick="switchTab('create')">➕ 建立新活動</button>
+        <button id="tabListBtn" class="admin-tab-btn" onclick="switchTab('list')">📋 報名者資料查詢</button>
       </div>
 
       <!-- 區塊一：建立新活動報名 -->
-      <div class="admin-section">
+      <div id="createSection" class="admin-section">
         <div class="section-badge-header">
           <span class="section-tag create-tag">➕ 建立新活動報名</span>
         </div>
@@ -91,8 +96,8 @@
         <div id="createMsg" class="message" style="display:none;"></div>
       </div>
 
-      <!-- 區塊二：已報名者資料列表 -->
-      <div class="admin-section" style="margin-top: 30px;">
+      <!-- 區塊二：已報名者資料列表 (預設隱藏，切換頁籤顯示) -->
+      <div id="listSection" class="admin-section" style="display: none;">
         <div class="admin-header-flex">
           <span class="section-tag list-tag">📋 已報名者資料列表</span>
           <button onclick="fetchRegistrations()" class="btn-refresh">🔄 重新整理資料</button>
@@ -139,8 +144,35 @@
       padding: 20px 24px;
       border-radius: 10px;
       border: 1px solid #e1e4e8;
-      margin-bottom: 25px;
+      margin-bottom: 20px;
       box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+    }
+    /* 頁籤按鈕樣式 */
+    .admin-tabs {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    .admin-tab-btn {
+      flex: 1;
+      padding: 12px;
+      background-color: #f6f8fa;
+      color: #57606a;
+      border: 1px solid #d0d7de;
+      border-radius: 8px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .admin-tab-btn:hover {
+      background-color: #eaecef;
+      color: #1f2328;
+    }
+    .admin-tab-btn.active {
+      background-color: #121826;
+      color: #ffffff;
+      border-color: #121826;
     }
     .section-badge-header, .admin-header-flex {
       display: flex;
@@ -173,6 +205,27 @@
     const GAS_URL = "https://script.google.com/macros/s/AKfycbzw8vASm3Nm7eIpcQYQ_QBMK4m3j0d9Thcw8N8nWBsuUPJDCsioB_KLErcH1nIP2v0/exec";
     let currentPassword = "";
 
+    // 頁籤切換功能
+    function switchTab(tabName) {
+      const createSec = document.getElementById("createSection");
+      const listSec = document.getElementById("listSection");
+      const tabCreateBtn = document.getElementById("tabCreateBtn");
+      const tabListBtn = document.getElementById("tabListBtn");
+
+      if (tabName === 'create') {
+        createSec.style.display = "block";
+        listSec.style.display = "none";
+        tabCreateBtn.className = "admin-tab-btn active";
+        tabListBtn.className = "admin-tab-btn";
+      } else {
+        createSec.style.display = "none";
+        listSec.style.display = "block";
+        tabCreateBtn.className = "admin-tab-btn";
+        tabListBtn.className = "admin-tab-btn active";
+        loadAdminEvents(); // 切換到清單時自動重新整理活動下拉選單
+      }
+    }
+
     function loginAdmin() {
       const pwd = document.getElementById("adminPwd").value.trim();
       const loginMsg = document.getElementById("loginMsg");
@@ -187,7 +240,6 @@
       loginMsg.style.display = "none";
       currentPassword = pwd;
 
-      // ⏳ 進入驗證狀態，鎖定按鈕並變更文字
       loginBtn.disabled = true;
       loginBtn.textContent = "驗證中...";
 
@@ -197,7 +249,7 @@
           if (res.status === "success") {
             document.getElementById("loginSection").style.display = "none";
             document.getElementById("adminContent").style.display = "block";
-            loadAdminEvents();
+            switchTab('create'); // 預設停留在建立活動頁籤
           } else {
             loginMsg.textContent = "密碼錯誤，請重新輸入！";
             loginMsg.style.display = "block";
@@ -209,7 +261,6 @@
           loginMsg.style.display = "block";
         })
         .finally(() => {
-          // 🔓 恢復按鈕狀態
           loginBtn.disabled = false;
           loginBtn.textContent = "登入後台";
         });
@@ -286,13 +337,15 @@
         password: currentPassword,
         eventId: document.getElementById("newEventId").value.trim(),
         eventName: document.getElementById("newEventName").value.trim(),
-        desc: document.getElementById("newEventDesc").value.trim(),
-        start: document.getElementById("newStartTime").value.replace("T", " "),
-        end: document.getElementById("newEndTime").value.replace("T", " ")
+        eventDesc: document.getElementById("newEventDesc").value.trim(), // 統一參數名稱
+        startTime: document.getElementById("newStartTime").value.replace("T", " "),
+        endTime: document.getElementById("newEndTime").value.replace("T", " ")
       };
 
+      // 🛠️ 修正傳輸問題：加入 headers 確保 GAS 正確解析 JSON
       fetch(GAS_URL, {
         method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
         body: JSON.stringify(payload)
       })
       .then(res => res.json())
@@ -312,7 +365,7 @@
         console.error(err);
         createMsg.style.display = "block";
         createMsg.className = "message error";
-        createMsg.textContent = "建立失敗，請檢查網路連線。";
+        createMsg.textContent = "建立失敗，請檢查網路連線或伺服器回應。";
       })
       .finally(() => {
         createBtn.disabled = false;
