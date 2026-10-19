@@ -14,12 +14,12 @@ body {
 }
 
 /* ==========================================================
-   2. 頂部導覽列 (Navbar) - 完美比例與黑會徽
+   2. 頂部導覽列 (Navbar) - 寬版滿版設計與一致的按鈕風格
 ========================================================== */
 .navbar {
   background-color: #ffffff;
   border-bottom: 1px solid #e1e4e8;
-  padding: 16px 40px !important;
+  padding: 14px 32px !important;
   display: flex !important;
   flex-direction: row !important;
   justify-content: space-between !important;
@@ -46,27 +46,26 @@ body {
   opacity: 0.85;
 }
 
-/* 修正會徽比例：固定高度並自動計算寬度，轉為純黑 */
-/* 調整會徽大小與比例，與公投專區 1:1 對齊 */
-/* 修正會徽大小：調整為 36px，與標題文字達到完美視覺平衡 */
-.nav-logo { 
-    height: 38px; 
-    width: auto; 
-    object-fit: contain;
-    filter: brightness(0);
- }
-  
+/* 會徽比例修正：固定高度並轉為純黑 */
+.nav-logo {
+  height: 30px !important;
+  width: auto !important;
+  object-fit: contain;
+  filter: brightness(0) saturate(100%) !important;
+}
 
 .nav-menu {
   display: flex !important;
   flex-direction: row !important;
-  gap: 12px;
+  gap: 10px; /* 統一按鈕間距 */
 }
 
+/* 統一所有導覽按鈕的外觀與顏色，避免雜亂 */
 .nav-btn {
-  background-color: transparent;
+  background-color: #f6f8fa;
   color: #586069;
-  padding: 8px 16px;
+  border: 1px solid #e1e4e8;
+  padding: 7px 14px;
   border-radius: 6px;
   text-decoration: none;
   font-size: 14px;
@@ -74,9 +73,15 @@ body {
   transition: all 0.2s;
 }
 
-.nav-btn:hover, .nav-btn.active {
+.nav-btn:hover {
+  background-color: #f0f1f3;
+  color: #1b1f23;
+}
+
+.nav-btn.active {
   background-color: #f0f1f3;
   color: #0969da;
+  border-color: #d0d7de;
   font-weight: 600;
 }
 
@@ -180,7 +185,6 @@ body {
   border-bottom: 2px solid #eaecef;
 }
 
-/* 開放中的標題線條設定為綠色 */
 .active-title { color: #1a7f37; border-bottom-color: #2da44e; }
 .upcoming-title { color: #d97706; border-bottom-color: #f59e0b; }
 .ended-title { color: #57606a; border-bottom-color: #8c959f; }

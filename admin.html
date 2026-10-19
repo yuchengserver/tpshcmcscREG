@@ -29,8 +29,9 @@
         
         <div class="login-form">
           <label class="login-label">🔒 管理員身份驗證</label>
-          <input type="password" id="adminPwd" class="login-input" placeholder="請輸入管理員密碼">
-          <button onclick="loginAdmin()" class="btn-login">登入後台</button>
+          <!-- 支援 Enter 鍵直接觸發登入 -->
+          <input type="password" id="adminPwd" class="login-input" placeholder="請輸入管理員密碼" onkeydown="if(event.key === 'Enter') loginAdmin()">
+          <button id="loginBtn" onclick="loginAdmin()" class="btn-login">登入後台</button>
         </div>
 
         <div id="loginMsg" class="message error" style="display:none; margin-top:15px;"></div>
@@ -175,6 +176,7 @@
     function loginAdmin() {
       const pwd = document.getElementById("adminPwd").value.trim();
       const loginMsg = document.getElementById("loginMsg");
+      const loginBtn = document.getElementById("loginBtn");
       
       if (!pwd) {
         loginMsg.textContent = "請輸入密碼！";
@@ -184,6 +186,10 @@
 
       loginMsg.style.display = "none";
       currentPassword = pwd;
+
+      // ⏳ 進入驗證狀態，鎖定按鈕並變更文字
+      loginBtn.disabled = true;
+      loginBtn.textContent = "驗證中...";
 
       fetch(`${GAS_URL}?action=adminLogin&password=${encodeURIComponent(pwd)}`)
         .then(res => res.json())
@@ -201,25 +207,30 @@
           console.error(err);
           loginMsg.textContent = "連線失敗，請檢查網路！";
           loginMsg.style.display = "block";
+        })
+        .finally(() => {
+          // 🔓 恢復按鈕狀態
+          loginBtn.disabled = false;
+          loginBtn.textContent = "登入後台";
         });
     }
 
     function loadAdminEvents() {
-  fetch(`${GAS_URL}?action=getEvents`)
-    .then(res => res.json())
-    .then(res => {
-      const select = document.getElementById("selectEvent");
-      select.innerHTML = '<option value="">請先選擇活動...</option>';
-      if (res.status === "success" && res.data) {
-        res.data.forEach(ev => {
-          const opt = document.createElement("option");
-          opt.value = ev["活動ID"];
-          opt.textContent = `[${ev["活動ID"]}] ${ev["活動名稱"]}`;
-          select.appendChild(opt);
+      fetch(`${GAS_URL}?action=getEvents`)
+        .then(res => res.json())
+        .then(res => {
+          const select = document.getElementById("selectEvent");
+          select.innerHTML = '<option value="">請先選擇活動...</option>';
+          if (res.status === "success" && res.data) {
+            res.data.forEach(ev => {
+              const opt = document.createElement("option");
+              opt.value = ev["活動ID"];
+              opt.textContent = `[${ev["活動ID"]}] ${ev["活動名稱"]}`;
+              select.appendChild(opt);
+            });
+          }
         });
-      }
-    });
-}
+    }
 
     function fetchRegistrations() {
       const eventId = document.getElementById("selectEvent").value;

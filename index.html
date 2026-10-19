@@ -34,7 +34,7 @@
     <!-- 重新整理與提示列 -->
     <div class="action-bar">
       <span class="tip-text">💡 提醒：本平台採用實名驗證，報名或提交意見時請使用學校信箱（@tshcmc.edu.vn）。</span>
-      <button onclick="fetchEvents()" class="btn-refresh">🔄 重新整理</button>
+      <button onclick="fetchEvents(true)" class="btn-refresh">🔄 重新整理</button>
     </div>
 
     <div id="loading" class="message">資料載入中...</div>
@@ -74,67 +74,90 @@
       return new Date(utc + (3600000 * 7));
     }
 
-    function fetchEvents() {
+    function fetchEvents(forceRefresh = false) {
       const loading = document.getElementById("loading");
+      const eventsContainer = document.getElementById("eventsContainer");
+
+      // 如果有本地快取且不是強制重新整理，直接秒開！
+      if (!forceRefresh) {
+        const cachedRes = sessionStorage.getItem("TSSC_EVENTS_CACHE");
+        if (cachedRes) {
+          try {
+            const data = JSON.parse(cachedRes);
+            renderEvents(data);
+            return;
+          } catch (e) {
+            console.error("快取解析失敗", e);
+          }
+        }
+      }
+
       loading.style.display = "block";
       loading.className = "message";
       loading.textContent = "資料載入中...";
+      eventsContainer.style.display = "none";
 
       fetch(`${GAS_URL}?action=getEvents`)
-        .then(res => res.text())
-        .then(text => JSON.parse(text))
+        .then(res => res.json())
         .then(res => {
-          loading.style.display = "none";
-          document.getElementById("eventsContainer").style.display = "block";
-
-          const activeContainer = document.getElementById("activeEvents");
-          const upcomingContainer = document.getElementById("upcomingEvents");
-          const endedContainer = document.getElementById("endedEvents");
-
-          activeContainer.innerHTML = "";
-          upcomingContainer.innerHTML = "";
-          endedContainer.innerHTML = "";
-
-          if (res.status === "success" && res.data && res.data.length > 0) {
-            const now = getNowGMT7();
-            let activeCount = 0, upcomingCount = 0, endedCount = 0;
-
-            res.data.forEach(event => {
-              const startTime = new Date(event["開始時間"]);
-              const endTime = new Date(event["結束時間"]);
-              const card = document.createElement("div");
-              card.className = "event-card";
-
-              if (now < startTime) {
-                upcomingCount++;
-                card.innerHTML = createCardHTML(event, "upcoming");
-                upcomingContainer.appendChild(card);
-              } else if (now >= endTime) {
-                endedCount++;
-                card.innerHTML = createCardHTML(event, "ended");
-                endedContainer.appendChild(card);
-              } else {
-                activeCount++;
-                card.innerHTML = createCardHTML(event, "active");
-                activeContainer.appendChild(card);
-              }
-            });
-
-            if (activeCount === 0) activeContainer.innerHTML = "<p class='no-data'>目前暫無項目。</p>";
-            if (upcomingCount === 0) upcomingContainer.innerHTML = "<p class='no-data'>目前暫無項目。</p>";
-            if (endedCount === 0) endedContainer.innerHTML = "<p class='no-data'>目前暫無項目。</p>";
-
-          } else {
-            activeContainer.innerHTML = "<p class='no-data'>目前暫無項目。</p>";
-            upcomingContainer.innerHTML = "<p class='no-data'>目前暫無項目。</p>";
-            endedContainer.innerHTML = "<p class='no-data'>目前暫無項目。</p>";
-          }
+          // 存入 sessionStorage 快取 (有效期間為本次瀏覽工作階段)
+          sessionStorage.setItem("TSSC_EVENTS_CACHE", JSON.stringify(res));
+          renderEvents(res);
         })
         .catch(err => {
           console.error(err);
           loading.className = "message error";
           loading.textContent = "無法載入活動列表，請檢查網路連線！";
         });
+    }
+
+    function renderEvents(res) {
+      const loading = document.getElementById("loading");
+      loading.style.display = "none";
+      document.getElementById("eventsContainer").style.display = "block";
+
+      const activeContainer = document.getElementById("activeEvents");
+      const upcomingContainer = document.getElementById("upcomingEvents");
+      const endedContainer = document.getElementById("endedEvents");
+
+      activeContainer.innerHTML = "";
+      upcomingContainer.innerHTML = "";
+      endedContainer.innerHTML = "";
+
+      if (res.status === "success" && res.data && res.data.length > 0) {
+        const now = getNowGMT7();
+        let activeCount = 0, upcomingCount = 0, endedCount = 0;
+
+        res.data.forEach(event => {
+          const startTime = new Date(event["開始時間"]);
+          const endTime = new Date(event["結束時間"]);
+          const card = document.createElement("div");
+          card.className = "event-card";
+
+          if (now < startTime) {
+            upcomingCount++;
+            card.innerHTML = createCardHTML(event, "upcoming");
+            upcomingContainer.appendChild(card);
+          } else if (now >= endTime) {
+            endedCount++;
+            card.innerHTML = createCardHTML(event, "ended");
+            endedContainer.appendChild(card);
+          } else {
+            activeCount++;
+            card.innerHTML = createCardHTML(event, "active");
+            activeContainer.appendChild(card);
+          }
+        });
+
+        if (activeCount === 0) activeContainer.innerHTML = "<p class='no-data'>目前暫無項目。</p>";
+        if (upcomingCount === 0) upcomingContainer.innerHTML = "<p class='no-data'>目前暫無項目。</p>";
+        if (endedCount === 0) endedContainer.innerHTML = "<p class='no-data'>目前暫無項目。</p>";
+
+      } else {
+        activeContainer.innerHTML = "<p class='no-data'>目前暫無項目。</p>";
+        upcomingContainer.innerHTML = "<p class='no-data'>目前暫無項目。</p>";
+        endedContainer.innerHTML = "<p class='no-data'>目前暫無項目。</p>";
+      }
     }
 
     function createCardHTML(event, status) {
@@ -168,7 +191,7 @@
       `;
     }
 
-    window.onload = fetchEvents;
+    window.onload = () => fetchEvents(false);
   </script>
 </body>
 </html>
