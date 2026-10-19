@@ -48,10 +48,10 @@ body {
 
 /* 會徽比例修正：固定高度並轉為純黑 */
 .nav-logo {
-  height: 30px !important;
-  width: auto !important;
+  height: 38px;
+  width: auto;
   object-fit: contain;
-  filter: brightness(0) saturate(100%) !important;
+  filter: brightness(0) ;
 }
 
 .nav-menu {
