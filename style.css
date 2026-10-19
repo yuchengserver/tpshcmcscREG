@@ -14,17 +14,17 @@ body {
 }
 
 /* ==========================================================
-   2. 頂部導覽列 (Navbar) - 完美 1:1 尺寸與黑會徽
+   2. 頂部導覽列 (Navbar) - 放大版型與黑會徽
 ========================================================== */
 .navbar {
   background-color: #ffffff;
   border-bottom: 1px solid #e1e4e8;
-  padding: 12px 40px;
+  padding: 18px 40px !important; /* 加大上下高度 */
   display: flex !important;
   flex-direction: row !important;
   justify-content: space-between !important;
   align-items: center !important;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.03);
   position: sticky;
   top: 0;
   z-index: 1000;
@@ -34,15 +34,15 @@ body {
 .nav-brand {
   display: flex !important;
   align-items: center !important;
-  gap: 12px;
-  font-size: 18px;
+  gap: 14px;
+  font-size: 20px !important; /* 放大標題字體 */
   font-weight: 700;
   color: #1b1f23;
 }
 
 /* 強制鎖死 Logo 大小並轉為純黑 */
 .nav-logo {
-  height: 24px !important;
+  height: 32px !important; /* 放大 Logo */
   width: auto !important;
   object-fit: contain;
   filter: brightness(0) saturate(100%) !important;
@@ -51,16 +51,16 @@ body {
 .nav-menu {
   display: flex !important;
   flex-direction: row !important;
-  gap: 12px;
+  gap: 15px;
 }
 
 .nav-btn {
   background-color: transparent;
   color: #586069;
-  padding: 8px 16px;
+  padding: 10px 18px !important; /* 放大按鈕尺寸 */
   border-radius: 6px;
   text-decoration: none;
-  font-size: 14px;
+  font-size: 15px !important; /* 放大按鈕文字 */
   font-weight: 500;
   transition: all 0.2s;
 }
