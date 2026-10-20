@@ -3,11 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>TSSC13TH - 活動報名</title>
+  <title>TSSC13TH - 活動報名專區</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <!-- 頂部導覽列 (僅顯示首頁與通知) -->
+  <!-- 頂部導覽列 -->
   <header class="navbar">
     <a href="index.html" class="nav-brand">
       <img src="tpshcmcsc.png" alt="TSSC Logo" class="nav-logo">
@@ -19,10 +19,9 @@
   </header>
 
   <div class="container signup-container">
-    <p style="margin-bottom: 15px;"><a href="index.html" class="back-link">← 返回提案列表</a></p>
+    <p style="margin-bottom: 15px;"><a href="index.html" class="back-link">← 返回活動列表</a></p>
 
     <div class="event-detail-box">
-      <span class="badge badge-active">💡 意見徵集</span>
       <h2 id="targetEventTitle" class="detail-title">載入活動名稱中...</h2>
       <p id="targetEventTime" class="detail-time">⏰ 時間：載入中...</p>
       <p id="targetEventDesc" class="detail-desc"></p>
@@ -34,11 +33,6 @@
         <select id="eventId" class="form-control" required>
           <option value="">載入中...</option>
         </select>
-      </div>
-
-      <div class="form-group">
-        <label for="note">請留下您的寶貴意見： *</label>
-        <textarea id="note" class="form-control" rows="4" required placeholder="請詳細說明您的想法或建議..."></textarea>
       </div>
 
       <div class="form-row">
@@ -71,7 +65,12 @@
         <small class="hint-text">請輸入寄送至您學校信箱中的 6 位數一次性驗證碼（有效期限 5 分鐘，每人每天最多發送 3 次）。</small>
       </div>
 
-      <button type="submit" id="submitBtn" class="btn-submit">確認並送出</button>
+      <div class="form-group">
+        <label for="note">備註 / 補充說明（選填）</label>
+        <textarea id="note" class="form-control" rows="3" placeholder="若有其他特殊事項可在此說明..."></textarea>
+      </div>
+
+      <button type="submit" id="submitBtn" class="btn-submit">確認並送出報名</button>
     </form>
 
     <div id="message" class="message" style="display:none;"></div>
@@ -262,7 +261,7 @@
       })
       .finally(() => {
         submitBtn.disabled = false;
-        submitBtn.textContent = "確認並送出";
+        submitBtn.textContent = "確認並送出報名";
       });
     });
   </script>

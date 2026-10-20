@@ -33,7 +33,7 @@
 
     <!-- 重新整理與提示列 -->
     <div class="action-bar">
-      <span class="tip-text">💡 提醒：本平台採用實名驗證，報名或提交意見時請使用學校信箱（@tshcmc.edu.vn）。</span>
+      <span class="tip-text">💡 提醒：本平台採用實名驗證，報名時請使用學校信箱（@tshcmc.edu.vn）。</span>
       <button onclick="fetchEvents(true)" class="btn-refresh">🔄 重新整理</button>
     </div>
 
@@ -175,8 +175,9 @@
         return isNaN(d.getTime()) ? timeStr : d.toLocaleString("zh-TW", { timeZone: "Asia/Ho_Chi_Minh" });
       };
 
+      // 已將文字從「前往報名 / 提交意見」改為純「前往報名」
       if (status === "active") {
-        buttonHTML = `<a href="signup.html?eventId=${encodeURIComponent(event["活動ID"] || '')}" class="btn-card-action btn-card-active">👉 前往報名 / 提交意見</a>`;
+        buttonHTML = `<a href="signup.html?eventId=${encodeURIComponent(event["活動ID"] || '')}" class="btn-card-action btn-card-active">👉 前往報名</a>`;
       } else if (status === "upcoming") {
         buttonHTML = `<button class="btn-card-action btn-card-disabled" disabled>尚未開放</button>`;
       } else if (status === "ended") {
@@ -203,7 +204,6 @@
 
       // 2. 設定每隔 1 分鐘（60000 毫秒）在背景自動靜默更新資料狀態（不顯示任何載入提示）
       setInterval(() => {
-        // 傳入 forceRefresh = true 以確保向 Google 試算表拿最新資料，isSilent = true 確保畫面完全不閃爍
         fetchEvents(true, true);
       }, 60000);
     };
