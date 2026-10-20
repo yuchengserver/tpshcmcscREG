@@ -62,7 +62,6 @@
         <span class="section-tag create-tag">➕ 建立新活動報名</span>
       </div>
 
-      <!-- 改用 div 包覆，完全避開 form 預設提交與刷新問題 -->
       <div id="createEventForm">
         <div class="form-row">
           <div class="form-group half">
@@ -91,8 +90,8 @@
           </div>
         </div>
 
-        <!-- 綁定純 JS 函式，點擊後觸發非同步上傳，絕對不刷新頁面 -->
-        <button type="button" class="btn-submit" id="createBtn" onclick="createEvent()">送出建立活動</button>
+        <!-- 修正為正確且不衝突的 submitCreateEvent -->
+        <button type="button" class="btn-submit" id="createBtn" onclick="submitCreateEvent()">送出建立活動</button>
       </div>
       <div id="createMsg" class="message" style="display:none; margin-top: 15px;"></div>
     </div>
@@ -320,7 +319,8 @@
         });
     }
 
-    function createEvent() {
+    // 修正為 submitCreateEvent 避免與瀏覽器內建 document.createEvent 衝突
+    function submitCreateEvent() {
       const eventId = document.getElementById("newEventId").value.trim();
       const eventName = document.getElementById("newEventName").value.trim();
       const startTime = document.getElementById("newStartTime").value;
