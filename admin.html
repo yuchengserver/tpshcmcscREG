@@ -62,15 +62,16 @@
         <span class="section-tag create-tag">➕ 建立新活動報名</span>
       </div>
 
-      <form id="createEventForm" onsubmit="createEvent(event)">
+      <!-- 改用 div 包覆，完全避開 form 預設提交與刷新問題 -->
+      <div id="createEventForm">
         <div class="form-row">
           <div class="form-group half">
             <label for="newEventId">活動 ID *</label>
-            <input type="text" id="newEventId" class="form-control" required placeholder="例如：ACT001">
+            <input type="text" id="newEventId" class="form-control" placeholder="例如：ACT001">
           </div>
           <div class="form-group half">
             <label for="newEventName">活動名稱 *</label>
-            <input type="text" id="newEventName" class="form-control" required placeholder="例如：學生會迎新晚會">
+            <input type="text" id="newEventName" class="form-control" placeholder="例如：學生會迎新晚會">
           </div>
         </div>
 
@@ -82,16 +83,17 @@
         <div class="form-row">
           <div class="form-group half">
             <label for="newStartTime">開始報名時間 *</label>
-            <input type="datetime-local" id="newStartTime" class="form-control" required>
+            <input type="datetime-local" id="newStartTime" class="form-control">
           </div>
           <div class="form-group half">
             <label for="newEndTime">結束報名時間 *</label>
-            <input type="datetime-local" id="newEndTime" class="form-control" required>
+            <input type="datetime-local" id="newEndTime" class="form-control">
           </div>
         </div>
 
-        <button type="submit" class="btn-submit" id="createBtn">送出建立活動</button>
-      </form>
+        <!-- 綁定純 JS 函式，點擊後觸發非同步上傳，絕對不刷新頁面 -->
+        <button type="button" class="btn-submit" id="createBtn" onclick="createEvent()">送出建立活動</button>
+      </div>
       <div id="createMsg" class="message" style="display:none; margin-top: 15px;"></div>
     </div>
 
@@ -129,8 +131,6 @@
         </table>
       </div>
     </div>
-
-    <p style="text-align: center; margin-top: 30px;"><a href="index.html" class="back-link">← 返回首頁</a></p>
   </div>
 
   <style>
@@ -320,10 +320,20 @@
         });
     }
 
-    function createEvent(e) {
-      e.preventDefault();
-      const createBtn = document.getElementById("createBtn");
+    function createEvent() {
+      const eventId = document.getElementById("newEventId").value.trim();
+      const eventName = document.getElementById("newEventName").value.trim();
+      const startTime = document.getElementById("newStartTime").value;
+      const endTime = document.getElementById("newEndTime").value;
       const createMsg = document.getElementById("createMsg");
+      const createBtn = document.getElementById("createBtn");
+
+      if (!eventId || !eventName || !startTime || !endTime) {
+        createMsg.style.display = "block";
+        createMsg.className = "message error";
+        createMsg.textContent = "❌ 請填寫所有必填欄位（活動 ID、名稱、開始與結束時間）！";
+        return;
+      }
 
       createBtn.disabled = true;
       createBtn.textContent = "上傳中...";
@@ -332,11 +342,11 @@
       const payload = {
         action: "createEvent",
         password: currentPassword,
-        eventId: document.getElementById("newEventId").value.trim(),
-        eventName: document.getElementById("newEventName").value.trim(),
+        eventId: eventId,
+        eventName: eventName,
         eventDesc: document.getElementById("newEventDesc").value.trim(),
-        startTime: document.getElementById("newStartTime").value.replace("T", " "),
-        endTime: document.getElementById("newEndTime").value.replace("T", " ")
+        startTime: startTime.replace("T", " "),
+        endTime: endTime.replace("T", " ")
       };
 
       fetch(GAS_URL, {
@@ -350,8 +360,13 @@
         if (res.status === "success") {
           createMsg.className = "message success";
           createMsg.textContent = "✅ 活動建立成功！";
-          document.getElementById("createEventForm").reset();
-          loadAdminEvents(); // 自動更新下拉選單
+          // 清空輸入欄位
+          document.getElementById("newEventId").value = "";
+          document.getElementById("newEventName").value = "";
+          document.getElementById("newEventDesc").value = "";
+          document.getElementById("newStartTime").value = "";
+          document.getElementById("newEndTime").value = "";
+          loadAdminEvents();
         } else {
           createMsg.className = "message error";
           createMsg.textContent = "❌ 建立失敗：" + (res.message || "未知錯誤");
