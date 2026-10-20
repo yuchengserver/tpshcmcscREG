@@ -74,12 +74,12 @@
       return new Date(utc + (3600000 * 7));
     }
 
-    function fetchEvents(forceRefresh = false) {
+    function fetchEvents(forceRefresh = false, isSilent = false) {
       const loading = document.getElementById("loading");
       const eventsContainer = document.getElementById("eventsContainer");
 
-      // 如果有本地快取且不是強制重新整理，直接秒開！
-      if (!forceRefresh) {
+      // 如果有本地快取且不是強制重新整理，且不是背景自動更新，直接秒開
+      if (!forceRefresh && !isSilent) {
         const cachedRes = sessionStorage.getItem("TSSC_EVENTS_CACHE");
         if (cachedRes) {
           try {
@@ -92,22 +92,28 @@
         }
       }
 
-      loading.style.display = "block";
-      loading.className = "message";
-      loading.textContent = "資料載入中...";
-      eventsContainer.style.display = "none";
+      // 只有在非背景靜默更新時，才顯示載入動畫
+      if (!isSilent) {
+        loading.style.display = "block";
+        loading.className = "message";
+        loading.textContent = "資料載入中...";
+        eventsContainer.style.display = "none";
+      }
 
       fetch(`${GAS_URL}?action=getEvents`)
         .then(res => res.json())
         .then(res => {
-          // 存入 sessionStorage 快取 (有效期間為本次瀏覽工作階段)
+          // 存入 sessionStorage 快取
           sessionStorage.setItem("TSSC_EVENTS_CACHE", JSON.stringify(res));
           renderEvents(res);
         })
         .catch(err => {
           console.error(err);
-          loading.className = "message error";
-          loading.textContent = "無法載入活動列表，請檢查網路連線！";
+          // 只有在手動重新整理失敗時才顯示錯誤提示，避免背景靜默更新失敗干擾使用者
+          if (!isSilent) {
+            loading.className = "message error";
+            loading.textContent = "無法載入活動列表，請檢查網路連線！";
+          }
         });
     }
 
@@ -191,7 +197,16 @@
       `;
     }
 
-    window.onload = () => fetchEvents(false);
+    window.onload = () => {
+      // 1. 頁面剛載入時先抓一次（允許優先讀取快取秒開）
+      fetchEvents(false, false);
+
+      // 2. 設定每隔 1 分鐘（60000 毫秒）在背景自動靜默更新資料狀態（不顯示任何載入提示）
+      setInterval(() => {
+        // 傳入 forceRefresh = true 以確保向 Google 試算表拿最新資料，isSilent = true 確保畫面完全不閃爍
+        fetchEvents(true, true);
+      }, 60000);
+    };
   </script>
 </body>
 </html>
