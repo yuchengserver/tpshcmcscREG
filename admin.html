@@ -90,7 +90,6 @@
           </div>
         </div>
 
-        <!-- 修正為正確且不衝突的 submitCreateEvent -->
         <button type="button" class="btn-submit" id="createBtn" onclick="submitCreateEvent()">送出建立活動</button>
       </div>
       <div id="createMsg" class="message" style="display:none; margin-top: 15px;"></div>
@@ -319,7 +318,6 @@
         });
     }
 
-    // 修正為 submitCreateEvent 避免與瀏覽器內建 document.createEvent 衝突
     function submitCreateEvent() {
       const eventId = document.getElementById("newEventId").value.trim();
       const eventName = document.getElementById("newEventName").value.trim();
@@ -360,7 +358,6 @@
         if (res.status === "success") {
           createMsg.className = "message success";
           createMsg.textContent = "✅ 活動建立成功！";
-          // 清空輸入欄位
           document.getElementById("newEventId").value = "";
           document.getElementById("newEventName").value = "";
           document.getElementById("newEventDesc").value = "";
@@ -391,6 +388,51 @@
       document.getElementById("adminContent").style.display = "none";
       document.getElementById("loginMsg").style.display = "none";
     }
+
+    // --- 全站動態高速上鎖監控機制 (嚴格綁定 18fxfF-BnNlDnhCH0NORbNeWXKSo1KHmljfPCkpvJTKo) ---
+    let consecutiveLockErrors = 0;
+
+    function checkSystemLockStatus(isInitialCheck = false) {
+      fetch(`${GAS_URL}?action=checkLockStatus`)
+        .then(res => res.json())
+        .then(res => {
+          // 嚴格驗證：唯有當後端明確回傳 status 為 success 且 locked 絕對等於 true 時才代表上鎖
+          const isServerLocked = (res && res.status === "success" && res.locked === true);
+
+          if (isServerLocked) {
+            if (isInitialCheck) {
+              consecutiveLockErrors++;
+              console.warn(`[高速安全監控] 偵測到指定試算表上鎖狀態，連續確認次數：${consecutiveLockErrors}/3`);
+              if (consecutiveLockErrors >= 3) {
+                window.location.href = "lock.html";
+              } else {
+                // 快速複查：0.5 秒後再次向指定試算表確認
+                setTimeout(() => checkSystemLockStatus(true), 500);
+              }
+            } else {
+              window.location.href = "lock.html";
+            }
+          } else {
+            consecutiveLockErrors = 0;
+          }
+        })
+        .catch(err => {
+          // 🛡️ 網路瞬斷或波動時靜默處理，絕不跳出提示干擾使用者
+          console.debug("背景同步指定試算表狀態暫時略過 (網路波動)", err);
+        });
+    }
+
+    window.addEventListener("load", () => {
+      if (window.location.pathname.includes("lock.html")) return;
+
+      // 1. 頁面載入時對指定試算表進行高速連續 3 次嚴格檢查
+      checkSystemLockStatus(true);
+
+      // 2. 背景持續監控：每 2 秒向指定試算表檢查一次
+      setInterval(() => {
+        checkSystemLockStatus(false);
+      }, 2000);
+    });
   </script>
 </body>
 </html>
