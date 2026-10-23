@@ -247,19 +247,24 @@
         msgDiv.style.display = "block";
         if (res.status === "success") {
           msgDiv.className = "message success";
-          msgDiv.textContent = res.message;
+          msgDiv.textContent = res.message + " 正在返回首頁...";
           document.getElementById("signupForm").reset();
+          
+          // ⏳ 報名成功後等待 1.5 秒，自動跳轉回首頁 index.html
+          setTimeout(() => {
+            window.location.href = "index.html";
+          }, 1500);
         } else {
           msgDiv.className = "message error";
           msgDiv.textContent = res.message;
+          submitBtn.disabled = false;
+          submitBtn.textContent = "確認並送出報名";
         }
       })
       .catch(err => {
         msgDiv.style.display = "block";
         msgDiv.className = "message error";
         msgDiv.textContent = "提交失敗，請檢查網路連線。";
-      })
-      .finally(() => {
         submitBtn.disabled = false;
         submitBtn.textContent = "確認並送出報名";
       });
