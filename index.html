@@ -195,18 +195,19 @@
     }
 
     window.onload = () => {
+      // 1. 頁面剛載入時先抓一次資料
       fetchEvents(false, false);
 
+      // 2. ⏳ 設定每 30 秒在背景自動靜默更新下方報名狀態與活動列表（不顯示任何載入提示）
       setInterval(() => {
         fetchEvents(true, true);
-      }, 60000);
+      }, 30000);
     };
 
     // --- 🔒 嚴格指定監控特定試算表的狀態機制 ---
     let consecutiveErrors = 0;
 
     function checkSystemStatus(isInitialCheck = false) {
-      // 透過參數明確指定要檢查的試算表 ID
       fetch(`${GAS_URL}?action=checkLockStatus&spreadsheetId=${TARGET_SHEET_ID}&_t=${Date.now()}`)
         .then(res => res.json())
         .then(res => {
