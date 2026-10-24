@@ -153,28 +153,24 @@
 
     <script>
         const GAS_URL = 'https://script.google.com/macros/s/AKfycbzw8vASm3Nm7eIpcQYQ_QBMK4m3j0d9Thcw8N8nWBsuUPJDCsioB_KLErcH1nIP2v0/exec';
-        // 指定遠端鎖定 Control Sheet ID
-        const TARGET_SHEET_ID = '18fxfF-BnNlDnhCH0NORbNeWXKSo1KHmljfPCkpvJTKo';
 
-        // 🔒 檢查是否明確解鎖（嚴格判定 data.locked === false 且非維護狀態）
+        // 🔓 嚴格檢查解鎖狀態
         function checkUnlockStatus() {
-            fetch(`${GAS_URL}?action=checkLockStatus&spreadsheetId=${TARGET_SHEET_ID}&_t=${Date.now()}`)
+            fetch(`${GAS_URL}?action=checkLockStatus&_t=${Date.now()}`)
                 .then(res => {
                     if (!res.ok) throw new Error('HTTP 錯誤');
                     return res.json();
                 })
                 .then(data => {
-                    // 只有當明確收到指定試算表傳回的 locked 為 false 且 maintenance 為 false 時，才允許返回首頁
-                    if (data && typeof data.locked !== 'undefined') {
-                        if (data.locked === false && data.maintenance === false) {
-                            window.location.href = 'index.html';
-                        }
+                    // 只要後端回傳 status 為 success 且 locked明確等於 false，立即自動跳轉回首頁！
+                    if (data && data.status === "success" && data.locked === false) {
+                        window.location.href = 'index.html';
                     }
                 })
-                .catch(err => console.error('鎖定狀態檢測失敗或後端異常:', err));
+                .catch(err => console.debug('背景解除鎖定檢測中...', err));
         }
 
-        // 頁面載入時執行，每 3 秒輪詢一次，自動解鎖跳轉
+        // 頁面載入時執行，每 3 秒輪詢一次，當試算表改回 false 時自動解鎖跳轉
         window.onload = function() {
             checkUnlockStatus();
             setInterval(checkUnlockStatus, 3000);

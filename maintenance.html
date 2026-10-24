@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>系統通知 - TSSC13TH 胡台校意見箱</title>
+    <title>系統通知 - TSSC13TH 胡台校活動報名專區</title>
     <style>
         * {
             box-sizing: border-box;
@@ -32,7 +32,21 @@
             text-align: center;
         }
 
-      
+        /* 🔴 閃爍紅光的呼吸燈動畫 */
+        @keyframes redGlowBreathing {
+            0% {
+                box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4);
+                transform: scale(1);
+            }
+            50% {
+                box-shadow: 0 0 22px 6px rgba(239, 68, 68, 0.85);
+                transform: scale(1.05);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4);
+                transform: scale(1);
+            }
+        } 
 
         /* 警告 Icon 區塊 */
         .icon-box {
@@ -70,13 +84,6 @@
             line-height: 1.5;
         }
 
-        .time-text {
-            font-size: 0.9rem;
-            color: #d97706;
-            font-weight: 600;
-            margin-bottom: 20px;
-        }
-
         .footer-org {
             font-size: 0.85rem;
             color: #94a3b8;
@@ -112,12 +119,7 @@
         </div>
 
         <div class="sub-message">
-            維護期間將暫時停止意見投遞等功能，造成不便，敬請見諒
-        </div>
-
-        <!-- 預計時間顯示（B3 有填寫時自動顯示） -->
-        <div id="timeBox" class="time-text" style="display: none;">
-            預計恢復使用時間：<span id="maintenanceTimeText"></span>
+            維護期間將暫時停止活動報名等功能，造成不便，敬請見諒
         </div>
 
         <div class="footer-org">
@@ -134,39 +136,24 @@
 
     <script>
         const GAS_URL = 'https://script.google.com/macros/s/AKfycbzw8vASm3Nm7eIpcQYQ_QBMK4m3j0d9Thcw8N8nWBsuUPJDCsioB_KLErcH1nIP2v0/exec';
-        // 指定遠端鎖定 Control Sheet ID
-        const TARGET_SHEET_ID = '18fxfF-BnNlDnhCH0NORbNeWXKSo1KHmljfPCkpvJTKo';
 
         function checkUnlockStatus() {
-            // 加上時間戳 _t 避免瀏覽器快取，並指定 spreadsheetId 參數
-            fetch(`${GAS_URL}?action=checkLockStatus&spreadsheetId=${TARGET_SHEET_ID}&_t=${Date.now()}`)
+            // 加上時間戳 _t 避免瀏覽器快取
+            fetch(`${GAS_URL}?action=checkLockStatus&_t=${Date.now()}`)
                 .then(res => {
                     if (!res.ok) throw new Error('HTTP 錯誤');
                     return res.json();
                 })
                 .then(data => {
-                    // 🔒 嚴格判斷：只有當明確回傳 locked === false 且 maintenance === false 時才允許跳轉回首頁
-                    if (data && typeof data.locked !== 'undefined') {
-                        if (data.locked === false && data.maintenance === false) {
-                            window.location.href = 'index.html';
-                            return;
-                        }
-
-                        // 讀取 B3 儲存格預計恢復時間
-                        const timeBox = document.getElementById('timeBox');
-                        const timeText = document.getElementById('maintenanceTimeText');
-                        if (data.maintenanceTime) {
-                            timeText.innerText = data.maintenanceTime;
-                            timeBox.style.display = 'block';
-                        } else {
-                            timeBox.style.display = 'none';
-                        }
+                    // 🔒 嚴格判斷：只要後端回傳 status 為 success 且 locked 明確等於 false，立刻自動跳轉回首頁！
+                    if (data && data.status === "success" && data.locked === false) {
+                        window.location.href = 'index.html';
                     }
                 })
-                .catch(err => console.error('維護狀態檢測失敗:', err));
+                .catch(err => console.debug('維護狀態檢測中...', err));
         }
 
-        // 頁面載入時執行，並設置 1 秒定期檢測，達到秒級跳轉
+        // 頁面載入時執行，並設置 1 秒定期檢測，達到秒級解鎖跳轉
         window.onload = function() {
             checkUnlockStatus();
             setInterval(checkUnlockStatus, 1000);
