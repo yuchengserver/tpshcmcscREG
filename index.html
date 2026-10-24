@@ -67,6 +67,7 @@
 
   <script>
     const GAS_URL = "https://script.google.com/macros/s/AKfycbzw8vASm3Nm7eIpcQYQ_QBMK4m3j0d9Thcw8N8nWBsuUPJDCsioB_KLErcH1nIP2v0/exec";
+    const TARGET_SHEET_ID = "18fxfF-BnNlDnhCH0NORbNeWXKSo1KHmljfPCkpvJTKo"; // 🔒 指定專用上鎖試算表 ID
 
     function getNowGMT7() {
       const now = new Date();
@@ -78,7 +79,6 @@
       const loading = document.getElementById("loading");
       const eventsContainer = document.getElementById("eventsContainer");
 
-      // 如果有本地快取且不是強制重新整理，且不是背景自動更新，直接秒開
       if (!forceRefresh && !isSilent) {
         const cachedRes = sessionStorage.getItem("TSSC_EVENTS_CACHE");
         if (cachedRes) {
@@ -92,7 +92,6 @@
         }
       }
 
-      // 只有在非背景靜默更新時，才顯示載入動畫
       if (!isSilent) {
         loading.style.display = "block";
         loading.className = "message";
@@ -103,13 +102,11 @@
       fetch(`${GAS_URL}?action=getEvents`)
         .then(res => res.json())
         .then(res => {
-          // 存入 sessionStorage 快取
           sessionStorage.setItem("TSSC_EVENTS_CACHE", JSON.stringify(res));
           renderEvents(res);
         })
         .catch(err => {
           console.error(err);
-          // 只有在手動重新整理失敗時才顯示錯誤提示，避免背景靜默更新失敗干擾使用者
           if (!isSilent) {
             loading.className = "message error";
             loading.textContent = "無法載入活動列表，請檢查網路連線！";
@@ -198,24 +195,23 @@
     }
 
     window.onload = () => {
-      // 1. 頁面剛載入時先抓一次（允許優先讀取快取秒開）
       fetchEvents(false, false);
 
-      // 2. 設定每隔 1 分鐘（60000 毫秒）在背景自動靜默更新資料狀態（不顯示任何載入提示）
       setInterval(() => {
         fetchEvents(true, true);
       }, 60000);
     };
 
-    // --- 全站動態高速狀態監控機制 (支援鎖定與維護模式分流) ---
+    // --- 🔒 嚴格指定監控特定試算表的狀態機制 ---
     let consecutiveErrors = 0;
 
     function checkSystemStatus(isInitialCheck = false) {
-      fetch(`${GAS_URL}?action=checkLockStatus`)
+      // 透過參數明確指定要檢查的試算表 ID
+      fetch(`${GAS_URL}?action=checkLockStatus&spreadsheetId=${TARGET_SHEET_ID}&_t=${Date.now()}`)
         .then(res => res.json())
         .then(res => {
           if (res && res.status === "success") {
-            // 1. 優先檢查維護模式 (B2 開啟時前往 maintenance.html)
+            // 1. 若 B2 為 TRUE，前往維護頁面
             if (res.maintenance === true) {
               if (isInitialCheck) {
                 consecutiveErrors++;
@@ -230,7 +226,7 @@
               return;
             }
 
-            // 2. 檢查完整上鎖模式 (A2 開啟時前往 lock.html)
+            // 2. 若 A2 不是 FALSE (包含空白、TRUE 等)，前往上鎖頁面
             if (res.locked === true) {
               if (isInitialCheck) {
                 consecutiveErrors++;
@@ -254,13 +250,12 @@
     }
 
     window.addEventListener("load", () => {
-      // 如果目前已經在對應的鎖定或維護頁面上，不重複執行
       if (window.location.pathname.includes("lock.html") || window.location.pathname.includes("maintenance.html")) return;
 
-      // 1. 頁面剛載入時進行高速連續 3 次檢查
+      // 1. 頁面載入時高速連續 3 次檢查指定試算表
       checkSystemStatus(true);
 
-      // 2. 背景持續監控：每 2 秒檢查一次
+      // 2. 背景每 2 秒向指定試算表檢查一次
       setInterval(() => {
         checkSystemStatus(false);
       }, 2000);
