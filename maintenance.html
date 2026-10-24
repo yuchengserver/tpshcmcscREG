@@ -32,7 +32,6 @@
             text-align: center;
         }
 
-        /* 警告 Icon 區塊 (保持穩定，不閃爍) */
         .icon-box {
             width: 68px;
             height: 68px;
@@ -68,10 +67,15 @@
         }
 
         .time-text {
-            font-size: 0.9rem;
+            font-size: 0.95rem;
             color: #d97706;
-            font-weight: 600;
+            font-weight: 700;
             margin-bottom: 20px;
+            background-color: #fffbebf5;
+            padding: 8px 14px;
+            border-radius: 8px;
+            border: 1px solid #fef3c7;
+            display: inline-block;
         }
 
         .footer-org {
@@ -96,12 +100,10 @@
 <body>
 
     <div class="card">
-        <!-- 圖示 (黃色警告) -->
         <div class="icon-box">
             ⚠️
         </div>
 
-        <!-- 文字層級 -->
         <div class="title">系統通知</div>
 
         <div class="main-message">
@@ -112,16 +114,15 @@
             維護期間將暫時停止活動報名等功能，造成不便，敬請見諒
         </div>
 
-        <!-- 預計恢復時間顯示（B3 有填寫時自動顯示） -->
+        <!-- 預計恢復時間顯示區塊 -->
         <div id="timeBox" class="time-text" style="display: none;">
-            預計恢復使用時間：<span id="maintenanceTimeText"></span>
+            ⏰ 預計恢復使用時間：<span id="maintenanceTimeText"></span>
         </div>
 
         <div class="footer-org">
             胡志明市台灣學校學生會 TSSC13TH
         </div>
 
-        <!-- 底部狀態標籤 -->
         <div>
             <div class="badge-status">
                 🛠️ 系統目前處於維護狀態
@@ -134,32 +135,34 @@
 
         function checkMaintenanceStatus() {
             fetch(`${GAS_URL}?action=checkLockStatus&_t=${Date.now()}`)
-                .then(res => {
-                    if (!res.ok) throw new Error('HTTP 錯誤');
-                    return res.json();
-                })
+                .then(res => res.json())
                 .then(data => {
                     if (data && data.status === "success") {
-                        // 1. 動態更新 B3 預計恢復時間顯示
+                        // 1. 動態綁定並顯示 B3 預計恢復時間
                         const timeBox = document.getElementById('timeBox');
                         const timeText = document.getElementById('maintenanceTimeText');
                         if (data.maintenanceTime && data.maintenanceTime.trim() !== "") {
                             timeText.innerText = data.maintenanceTime;
-                            timeBox.style.display = 'block';
+                            timeBox.style.display = 'inline-block';
                         } else {
                             timeBox.style.display = 'none';
                         }
 
-                        // 2. 只有當維護模式與完全上鎖都變成 false 時，才跳回首頁，避免來回閃爍
-                        if (data.locked === false && data.maintenance === false) {
+                        // 2. 若為完全鎖定模式，跳轉到 lock.html
+                        if (data.locked === true) {
+                            window.location.href = 'lock.html';
+                            return;
+                        }
+
+                        // 3. 唯有當維護與鎖定皆解除時，才安全返回首頁
+                        if (data.maintenance === false && data.locked === false) {
                             window.location.href = 'index.html';
                         }
                     }
                 })
-                .catch(err => console.debug('維護狀態檢測中...', err));
+                .catch(err => console.debug('維護狀態監控中...', err));
         }
 
-        // 頁面載入時執行，並設置 2 秒定期檢測
         window.onload = function() {
             checkMaintenanceStatus();
             setInterval(checkMaintenanceStatus, 2000);
