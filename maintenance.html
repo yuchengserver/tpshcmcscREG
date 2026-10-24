@@ -32,23 +32,7 @@
             text-align: center;
         }
 
-        /* 🔴 閃爍紅光的呼吸燈動畫 */
-        @keyframes redGlowBreathing {
-            0% {
-                box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4);
-                transform: scale(1);
-            }
-            50% {
-                box-shadow: 0 0 22px 6px rgba(239, 68, 68, 0.85);
-                transform: scale(1.05);
-            }
-            100% {
-                box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4);
-                transform: scale(1);
-            }
-        } 
-
-        /* 警告 Icon 區塊 */
+        /* 警告 Icon 區塊 (保持穩定，不閃爍) */
         .icon-box {
             width: 68px;
             height: 68px;
@@ -59,7 +43,6 @@
             align-items: center;
             margin: 0 auto 20px;
             font-size: 2rem;
-            animation: redGlowBreathing 1.2s infinite ease-in-out; /* 閃爍紅光 */
         }
 
         .title {
@@ -80,8 +63,15 @@
         .sub-message {
             font-size: 0.95rem;
             color: #64748b;
-            margin-bottom: 24px;
+            margin-bottom: 20px;
             line-height: 1.5;
+        }
+
+        .time-text {
+            font-size: 0.9rem;
+            color: #d97706;
+            font-weight: 600;
+            margin-bottom: 20px;
         }
 
         .footer-org {
@@ -106,7 +96,7 @@
 <body>
 
     <div class="card">
-        <!-- 圖示 (黃色警告 + 閃爍紅光) -->
+        <!-- 圖示 (黃色警告) -->
         <div class="icon-box">
             ⚠️
         </div>
@@ -120,6 +110,11 @@
 
         <div class="sub-message">
             維護期間將暫時停止活動報名等功能，造成不便，敬請見諒
+        </div>
+
+        <!-- 預計恢復時間顯示（B3 有填寫時自動顯示） -->
+        <div id="timeBox" class="time-text" style="display: none;">
+            預計恢復使用時間：<span id="maintenanceTimeText"></span>
         </div>
 
         <div class="footer-org">
@@ -137,26 +132,37 @@
     <script>
         const GAS_URL = 'https://script.google.com/macros/s/AKfycbzw8vASm3Nm7eIpcQYQ_QBMK4m3j0d9Thcw8N8nWBsuUPJDCsioB_KLErcH1nIP2v0/exec';
 
-        function checkUnlockStatus() {
-            // 加上時間戳 _t 避免瀏覽器快取
+        function checkMaintenanceStatus() {
             fetch(`${GAS_URL}?action=checkLockStatus&_t=${Date.now()}`)
                 .then(res => {
                     if (!res.ok) throw new Error('HTTP 錯誤');
                     return res.json();
                 })
                 .then(data => {
-                    // 🔒 嚴格判斷：只要後端回傳 status 為 success 且 locked 明確等於 false，立刻自動跳轉回首頁！
-                    if (data && data.status === "success" && data.locked === false) {
-                        window.location.href = 'index.html';
+                    if (data && data.status === "success") {
+                        // 1. 動態更新 B3 預計恢復時間顯示
+                        const timeBox = document.getElementById('timeBox');
+                        const timeText = document.getElementById('maintenanceTimeText');
+                        if (data.maintenanceTime && data.maintenanceTime.trim() !== "") {
+                            timeText.innerText = data.maintenanceTime;
+                            timeBox.style.display = 'block';
+                        } else {
+                            timeBox.style.display = 'none';
+                        }
+
+                        // 2. 只有當維護模式與完全上鎖都變成 false 時，才跳回首頁，避免來回閃爍
+                        if (data.locked === false && data.maintenance === false) {
+                            window.location.href = 'index.html';
+                        }
                     }
                 })
                 .catch(err => console.debug('維護狀態檢測中...', err));
         }
 
-        // 頁面載入時執行，並設置 1 秒定期檢測，達到秒級解鎖跳轉
+        // 頁面載入時執行，並設置 2 秒定期檢測
         window.onload = function() {
-            checkUnlockStatus();
-            setInterval(checkUnlockStatus, 1000);
+            checkMaintenanceStatus();
+            setInterval(checkMaintenanceStatus, 2000);
         };
     </script>
 </body>
