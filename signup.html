@@ -270,48 +270,62 @@
       });
     });
 
-    // --- 全站動態高速上鎖監控機制 (嚴格綁定 18fxfF-BnNlDnhCH0NORbNeWXKSo1KHmljfPCkpvJTKo) ---
-    let consecutiveLockErrors = 0;
+    // --- 全站動態高速狀態監控機制 (支援鎖定與維護模式分流) ---
+    let consecutiveErrors = 0;
 
-    function checkSystemLockStatus(isInitialCheck = false) {
+    function checkSystemStatus(isInitialCheck = false) {
       fetch(`${GAS_URL}?action=checkLockStatus`)
         .then(res => res.json())
         .then(res => {
-          // 嚴格驗證：唯有當後端明確回傳 status 為 success 且 locked 絕對等於 true 時才代表上鎖
-          const isServerLocked = (res && res.status === "success" && res.locked === true);
-
-          if (isServerLocked) {
-            if (isInitialCheck) {
-              consecutiveLockErrors++;
-              console.warn(`[高速安全監控] 偵測到指定試算表上鎖狀態，連續確認次數：${consecutiveLockErrors}/3`);
-              if (consecutiveLockErrors >= 3) {
-                window.location.href = "lock.html";
+          if (res && res.status === "success") {
+            // 1. 優先檢查維護模式 (B2 開啟時前往 maintenance.html)
+            if (res.maintenance === true) {
+              if (isInitialCheck) {
+                consecutiveErrors++;
+                if (consecutiveErrors >= 3) {
+                  window.location.href = "maintenance.html";
+                } else {
+                  setTimeout(() => checkSystemStatus(true), 500);
+                }
               } else {
-                // 快速複查：0.5 秒後再次向指定試算表確認
-                setTimeout(() => checkSystemLockStatus(true), 500);
+                window.location.href = "maintenance.html";
               }
-            } else {
-              window.location.href = "lock.html";
+              return;
             }
-          } else {
-            consecutiveLockErrors = 0;
+
+            // 2. 檢查完整上鎖模式 (A2 開啟時前往 lock.html)
+            if (res.locked === true) {
+              if (isInitialCheck) {
+                consecutiveErrors++;
+                if (consecutiveErrors >= 3) {
+                  window.location.href = "lock.html";
+                } else {
+                  setTimeout(() => checkSystemStatus(true), 500);
+                }
+              } else {
+                window.location.href = "lock.html";
+              }
+              return;
+            }
+
+            consecutiveErrors = 0;
           }
         })
         .catch(err => {
-          // 🛡️ 網路瞬斷或波動時靜默處理，絕不跳出提示干擾使用者
-          console.debug("背景同步指定試算表狀態暫時略過 (網路波動)", err);
+          console.debug("背景狀態同步暫時略過 (網路波動)", err);
         });
     }
 
     window.addEventListener("load", () => {
-      if (window.location.pathname.includes("lock.html")) return;
+      // 如果目前已經在對應的鎖定或維護頁面上，不重複執行
+      if (window.location.pathname.includes("lock.html") || window.location.pathname.includes("maintenance.html")) return;
 
-      // 1. 頁面載入時對指定試算表進行高速連續 3 次嚴格檢查
-      checkSystemLockStatus(true);
+      // 1. 頁面剛載入時進行高速連續 3 次檢查
+      checkSystemStatus(true);
 
-      // 2. 背景持續監控：每 2 秒向指定試算表檢查一次
+      // 2. 背景持續監控：每 2 秒檢查一次
       setInterval(() => {
-        checkSystemLockStatus(false);
+        checkSystemStatus(false);
       }, 2000);
     });
   </script>
