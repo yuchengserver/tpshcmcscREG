@@ -5,6 +5,33 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>TSSC13TH - 管理員後台</title>
   <link rel="stylesheet" href="style.css">
+  <style>
+    .question-builder-card {
+      background: #f6f8fa;
+      border: 1px solid #d0d7de;
+      padding: 16px;
+      border-radius: 8px;
+      margin-bottom: 15px;
+      position: relative;
+    }
+    .question-builder-card .btn-delete-q {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: #ffeef0;
+      color: #cf222e;
+      border: 1px solid #ffc1c0;
+      padding: 4px 8px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 12px;
+    }
+    .options-box {
+      margin-top: 10px;
+      padding-left: 15px;
+      border-left: 3px solid #0969da;
+    }
+  </style>
 </head>
 <body>
   <!-- 頂部導覽列 -->
@@ -52,14 +79,14 @@
 
     <!-- 上方功能頁籤 (左邊：建立活動，右邊：報名資料) -->
     <div class="admin-tabs">
-      <button id="tabCreateBtn" class="admin-tab-btn active" onclick="switchTab('create')">➕ 建立新活動</button>
+      <button id="tabCreateBtn" class="admin-tab-btn active" onclick="switchTab('create')">➕ 建立 / 編輯活動</button>
       <button id="tabListBtn" class="admin-tab-btn" onclick="switchTab('list')">📋 報名者資料查詢</button>
     </div>
 
-    <!-- 區塊一：建立新活動報名 -->
+    <!-- 區塊一：建立新活動與動態題目設定 -->
     <div id="createSection" class="admin-section">
       <div class="section-badge-header">
-        <span class="section-tag create-tag">➕ 建立新活動報名</span>
+        <span class="section-tag create-tag">➕ 建立活動與自訂表單題目</span>
       </div>
 
       <div id="createEventForm">
@@ -90,7 +117,18 @@
           </div>
         </div>
 
-        <button type="button" class="btn-submit" id="createBtn" onclick="submitCreateEvent()">送出建立活動</button>
+        <hr style="margin: 25px 0; border: 0; border-top: 1px solid #d0d7de;">
+
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+          <h3 style="margin: 0; font-size: 18px;">📝 自訂報名表單題目（Google 表單風格）</h3>
+          <button type="button" onclick="addQuestionBuilder()" class="btn-secondary" style="width: auto; padding: 6px 12px;">➕ 新增題目</button>
+        </div>
+
+        <div id="questionsContainer">
+          <!-- 動態題目產生處 -->
+        </div>
+
+        <button type="button" class="btn-submit" id="createBtn" onclick="submitCreateEvent()" style="margin-top: 20px;">送出建立 / 更新活動</button>
       </div>
       <div id="createMsg" class="message" style="display:none; margin-top: 15px;"></div>
     </div>
@@ -114,17 +152,13 @@
       <div class="table-responsive" style="margin-top: 15px;">
         <table id="dataTable">
           <thead>
-            <tr>
+            <tr id="tableHeaderRow">
               <th>報名時間</th>
-              <th>姓名</th>
-              <th>班級</th>
-              <th>座號</th>
               <th>Email</th>
-              <th>備註</th>
             </tr>
           </thead>
           <tbody>
-            <tr><td colspan="6" class="no-data">請先選擇上方活動以檢視報名清單。</td></tr>
+            <tr><td colspan="2" class="no-data">請先選擇上方活動以檢視報名清單。</td></tr>
           </tbody>
         </table>
       </div>
@@ -245,6 +279,13 @@
             document.getElementById("loginSection").style.display = "none";
             document.getElementById("adminContent").style.display = "block";
             switchTab('create');
+            
+            // 預設帶入基本範例欄位（姓名、班級、座號）
+            if (document.getElementById("questionsContainer").children.length === 0) {
+              addQuestionBuilder("姓名", "text", true);
+              addQuestionBuilder("班級", "text", true);
+              addQuestionBuilder("座號", "text", true);
+            }
           } else {
             loginMsg.textContent = "密碼錯誤，請重新輸入！";
             loginMsg.style.display = "block";
@@ -259,6 +300,50 @@
           loginBtn.disabled = false;
           loginBtn.textContent = "登入後台";
         });
+    }
+
+    function addQuestionBuilder(label = "", type = "text", required = true, options = "") {
+      const container = document.getElementById("questionsContainer");
+      const div = document.createElement("div");
+      div.className = "question-builder-card";
+      div.innerHTML = `
+        <button type="button" class="btn-delete-q" onclick="this.parentElement.remove()">刪除此題</button>
+        <div class="form-row">
+          <div class="form-group half">
+            <label>題目名稱 *</label>
+            <input type="text" class="form-control q-label" value="${label}" placeholder="例如：姓名、餐點選擇">
+          </div>
+          <div class="form-group half">
+            <label>題目類型 *</label>
+            <select class="form-control q-type" onchange="toggleOptionsInput(this)">
+              <option value="text" ${type === 'text' ? 'selected' : ''}>簡答 / 文字</option>
+              <option value="textarea" ${type === 'textarea' ? 'selected' : ''}>長文字說明</option>
+              <option value="radio" ${type === 'radio' ? 'selected' : ''}>單選題</option>
+              <option value="checkbox" ${type === 'checkbox' ? 'selected' : ''}>核取方塊 (多選)</option>
+              <option value="select" ${type === 'select' ? 'selected' : ''}>下拉選單</option>
+            </select>
+          </div>
+        </div>
+        <div class="options-container options-box" style="display: ${['radio','checkbox','select'].includes(type) ? 'block' : 'none'};">
+          <label>選項設定 (請用半形逗號 , 隔開選項)</label>
+          <input type="text" class="form-control q-options" value="${options}" placeholder="例如：選項A, 選項B, 選項C">
+        </div>
+        <div style="margin-top: 10px;">
+          <label><input type="checkbox" class="q-required" ${required ? 'checked' : ''}> 此題設為必填</label>
+        </div>
+      `;
+      container.appendChild(div);
+    }
+
+    function toggleOptionsInput(selectEl) {
+      const card = selectEl.closest('.question-builder-card');
+      const optContainer = card.querySelector('.options-container');
+      const val = selectEl.value;
+      if (['radio', 'checkbox', 'select'].includes(val)) {
+        optContainer.style.display = 'block';
+      } else {
+        optContainer.style.display = 'none';
+      }
     }
 
     function loadAdminEvents() {
@@ -280,11 +365,13 @@
 
     function fetchRegistrations() {
       const eventId = document.getElementById("selectEvent").value;
+      const theadRow = document.getElementById("tableHeaderRow");
       const tbody = document.querySelector("#dataTable tbody");
       const loading = document.getElementById("regLoading");
 
       if (!eventId) {
-        tbody.innerHTML = '<tr><td colspan="6" class="no-data">請先選擇上方活動以檢視報名清單。</td></tr>';
+        theadRow.innerHTML = '<th>報名時間</th><th>Email</th>';
+        tbody.innerHTML = '<tr><td colspan="2" class="no-data">請先選擇上方活動以檢視報名清單。</td></tr>';
         return;
       }
 
@@ -296,26 +383,35 @@
         .then(res => {
           loading.style.display = "none";
           if (res.status === "success" && res.data && res.data.length > 0) {
+            const firstRow = res.data[0];
+            const keys = Object.keys(firstRow);
+
+            let thHTML = '';
+            keys.forEach(k => {
+              thHTML += `<th>${k}</th>`;
+            });
+            theadRow.innerHTML = thHTML;
+
             res.data.forEach(row => {
               const tr = document.createElement("tr");
-              tr.innerHTML = `
-                <td>${row["報名時間"] ? new Date(row["報名時間"]).toLocaleString() : ''}</td>
-                <td><strong>${row["姓名"] || ''}</strong></td>
-                <td>${row["班級"] || ''}</td>
-                <td>${row["座號"] || ''}</td>
-                <td>${row["email"] || ''}</td>
-                <td>${row["備註"] || '無'}</td>
-              `;
+              let tdHTML = '';
+              keys.forEach(k => {
+                let val = row[k] || '';
+                if (k === "報名時間" && val) val = new Date(val).toLocaleString();
+                tdHTML += `<td>${val}</td>`;
+              });
+              tr.innerHTML = tdHTML;
               tbody.appendChild(tr);
             });
           } else {
-            tbody.innerHTML = '<tr><td colspan="6" class="no-data">目前尚無同學報名此活動。</td></tr>';
+            theadRow.innerHTML = '<th>報名時間</th><th>Email</th>';
+            tbody.innerHTML = '<tr><td colspan="2" class="no-data">目前尚無同學報名此活動。</td></tr>';
           }
         })
         .catch(err => {
           console.error(err);
           loading.style.display = "none";
-          tbody.innerHTML = '<tr><td colspan="6" class="no-data" style="color: #cf222e;">載入資料失敗，請檢查網路！</td></tr>';
+          tbody.innerHTML = '<tr><td colspan="2" class="no-data" style="color: #cf222e;">載入資料失敗，請檢查網路！</td></tr>';
         });
     }
 
@@ -334,6 +430,25 @@
         return;
       }
 
+      const qCards = document.querySelectorAll(".question-builder-card");
+      let questions = [];
+      qCards.forEach(card => {
+        const label = card.querySelector(".q-label").value.trim();
+        const type = card.querySelector(".q-type").value;
+        const required = card.querySelector(".q-required").checked;
+        const rawOpts = card.querySelector(".q-options").value;
+        const options = rawOpts ? rawOpts.split(",").map(s => s.trim()).filter(s => s) : [];
+
+        if (label) {
+          questions.push({ label, type, required, options });
+        }
+      });
+
+      if (questions.length === 0) {
+        alert("請至少設定一個報名題目！");
+        return;
+      }
+
       createBtn.disabled = true;
       createBtn.textContent = "上傳中...";
       createMsg.style.display = "none";
@@ -345,7 +460,8 @@
         eventName: eventName,
         eventDesc: document.getElementById("newEventDesc").value.trim(),
         startTime: startTime.replace("T", " "),
-        endTime: endTime.replace("T", " ")
+        endTime: endTime.replace("T", " "),
+        questions: questions
       };
 
       fetch(GAS_URL, {
@@ -358,12 +474,7 @@
         createMsg.style.display = "block";
         if (res.status === "success") {
           createMsg.className = "message success";
-          createMsg.textContent = "✅ 活動建立成功！";
-          document.getElementById("newEventId").value = "";
-          document.getElementById("newEventName").value = "";
-          document.getElementById("newEventDesc").value = "";
-          document.getElementById("newStartTime").value = "";
-          document.getElementById("newEndTime").value = "";
+          createMsg.textContent = "✅ 活動與自訂題目建立成功！";
           loadAdminEvents();
         } else {
           createMsg.className = "message error";
@@ -378,7 +489,7 @@
       })
       .finally(() => {
         createBtn.disabled = false;
-        createBtn.textContent = "送出建立活動";
+        createBtn.textContent = "送出建立 / 更新活動";
       });
     }
 
@@ -394,12 +505,10 @@
     let consecutiveErrors = 0;
 
     function checkSystemStatus(isInitialCheck = false) {
-      // 透過參數明確指定要檢查的試算表 ID
       fetch(`${GAS_URL}?action=checkLockStatus&spreadsheetId=${TARGET_SHEET_ID}&_t=${Date.now()}`)
         .then(res => res.json())
         .then(res => {
           if (res && res.status === "success") {
-            // 1. 若 B2 為 TRUE，前往維護頁面
             if (res.maintenance === true) {
               if (isInitialCheck) {
                 consecutiveErrors++;
@@ -414,7 +523,6 @@
               return;
             }
 
-            // 2. 若 A2 不是 FALSE (包含空白、TRUE 等)，前往上鎖頁面
             if (res.locked === true) {
               if (isInitialCheck) {
                 consecutiveErrors++;
@@ -440,10 +548,7 @@
     window.addEventListener("load", () => {
       if (window.location.pathname.includes("lock.html") || window.location.pathname.includes("maintenance.html")) return;
 
-      // 1. 頁面載入時高速連續 3 次檢查指定試算表
       checkSystemStatus(true);
-
-      // 2. 背景每 2 秒向指定試算表檢查一次
       setInterval(() => {
         checkSystemStatus(false);
       }, 2000);

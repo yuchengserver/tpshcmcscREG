@@ -35,23 +35,12 @@
         </select>
       </div>
 
-      <div class="form-row">
-        <div class="form-group half">
-          <label for="name">姓名 *</label>
-          <input type="text" id="name" class="form-control" required placeholder="例如：張小明">
-        </div>
-        <div class="form-group half">
-          <label for="className">班級 *</label>
-          <input type="text" id="className" class="form-control" required placeholder="例如：高二1班">
-        </div>
+      <!-- 動態題目渲染容器 -->
+      <div id="dynamicQuestionsContainer">
+        <p style="color: #57606a;">正在載入報名表單題目...</p>
       </div>
 
-      <div class="form-group">
-        <label for="seatNumber">座號 *</label>
-        <input type="text" id="seatNumber" class="form-control" required placeholder="例如：15">
-      </div>
-
-      <div class="form-group">
+      <div class="form-group" style="margin-top: 25px;">
         <label for="email">學校官方電子信箱 (@tshcmc.edu.vn) *</label>
         <div class="input-with-btn">
           <input type="email" id="email" class="form-control" required placeholder="s123456@tshcmc.edu.vn" pattern="^\d{7}@tshcmc\.edu\.vn$">
@@ -65,12 +54,7 @@
         <small class="hint-text">請輸入寄送至您學校信箱中的 6 位數一次性驗證碼（有效期限 5 分鐘，每人每天最多發送 3 次）。</small>
       </div>
 
-      <div class="form-group">
-        <label for="note">備註 / 補充說明（選填）</label>
-        <textarea id="note" class="form-control" rows="3" placeholder="若有其他特殊事項可在此說明..."></textarea>
-      </div>
-
-      <button type="submit" id="submitBtn" class="btn-submit">確認並送出報名</button>
+      <button type="submit" id="submitBtn" class="btn-submit" style="margin-top: 20px;">確認並送出報名</button>
     </form>
 
     <div id="message" class="message" style="display:none;"></div>
@@ -102,8 +86,7 @@
       const targetEventId = urlParams.get('eventId');
 
       fetch(`${GAS_URL}?action=getEvents`)
-        .then(res => res.text())
-        .then(text => JSON.parse(text))
+        .then(res => res.json())
         .then(res => {
           const select = document.getElementById("eventId");
           select.innerHTML = '<option value="">-- 請選擇報名活動 --</option>';
@@ -127,6 +110,9 @@
                   document.getElementById("targetEventTitle").textContent = item["活動名稱"];
                   document.getElementById("targetEventDesc").textContent = item["說明"] || "";
                   document.getElementById("targetEventTime").textContent = `⏰ 開始時間：${new Date(item["開始時間"]).toLocaleString()} | ⌛ 截止時間：${new Date(item["結束時間"]).toLocaleString()}`;
+                  
+                  // 渲染動態表單題目
+                  renderDynamicQuestions(item["題目JSON"]);
                 }
                 select.appendChild(opt);
               }
@@ -134,6 +120,58 @@
           }
         });
     };
+
+    function renderDynamicQuestions(jsonStr) {
+      const container = document.getElementById("dynamicQuestionsContainer");
+      container.innerHTML = "";
+
+      try {
+        const questions = JSON.parse(jsonStr || "[]");
+        if (questions.length === 0) {
+          container.innerHTML = "<p style='color: #cf222e;'>此活動尚未設定任何報名題目，請聯絡管理員。</p>";
+          return;
+        }
+
+        questions.forEach((q, index) => {
+          const div = document.createElement("div");
+          div.className = "form-group";
+          div.style.marginBottom = "20px";
+
+          let labelHTML = `<label>${q.label} ${q.required ? '<span style="color:red;">*</span>' : ''}</label>`;
+          let inputHTML = "";
+
+          if (q.type === "text") {
+            inputHTML = `<input type="text" class="form-control dynamic-input" data-label="${q.label}" ${q.required ? 'required' : ''} placeholder="請輸入${q.label}">`;
+          } else if (q.type === "textarea") {
+            inputHTML = `<textarea class="form-control dynamic-input" data-label="${q.label}" rows="3" ${q.required ? 'required' : ''} placeholder="請輸入${q.label}"></textarea>`;
+          } else if (q.type === "select") {
+            let opts = `<option value="">-- 請選擇 --</option>`;
+            (q.options || []).forEach(opt => {
+              opts += `<option value="${opt}">${opt}</option>`;
+            });
+            inputHTML = `<select class="form-control dynamic-input" data-label="${q.label}" ${q.required ? 'required' : ''}>${opts}</select>`;
+          } else if (q.type === "radio") {
+            let opts = "";
+            (q.options || []).forEach(opt => {
+              opts += `<div style="margin-top: 6px;"><label style="font-weight: normal; cursor: pointer;"><input type="radio" name="q_${index}" value="${opt}" class="dynamic-input" data-label="${q.label}" ${q.required ? 'required' : ''}> ${opt}</label></div>`;
+            });
+            inputHTML = opts;
+          } else if (q.type === "checkbox") {
+            let opts = "";
+            (q.options || []).forEach(opt => {
+              opts += `<div style="margin-top: 6px;"><label style="font-weight: normal; cursor: pointer;"><input type="checkbox" value="${opt}" class="dynamic-checkbox" data-label="${q.label}"> ${opt}</label></div>`;
+            });
+            inputHTML = opts;
+          }
+
+          div.innerHTML = labelHTML + inputHTML;
+          container.appendChild(div);
+        });
+      } catch (err) {
+        console.error(err);
+        container.innerHTML = "<p style='color:red;'>題目載入解析失敗。</p>";
+      }
+    }
 
     function sendVerificationCode() {
       const email = document.getElementById("email").value.trim();
@@ -153,8 +191,7 @@
         headers: { "Content-Type": "text/plain;charset=utf-8" },
         body: JSON.stringify({ action: "sendCode", email: email })
       })
-      .then(res => res.text())
-      .then(text => JSON.parse(text))
+      .then(res => res.json())
       .then(res => {
         msgDiv.style.display = "block";
         if (res.status === "success") {
@@ -222,18 +259,43 @@
         return;
       }
 
+      // 收集動態表單的答案
+      let answers = {};
+      
+      // 1. 收集普通文字、長文字、下拉與單選
+      const inputs = document.querySelectorAll(".dynamic-input");
+      inputs.forEach(el => {
+        const label = el.getAttribute("data-label");
+        if (el.type === "radio") {
+          if (el.checked) answers[label] = el.value;
+        } else {
+          answers[label] = el.value.trim();
+        }
+      });
+
+      // 2. 收集核取方塊 (多選)
+      const checkboxes = document.querySelectorAll(".dynamic-checkbox");
+      let cbMap = {};
+      checkboxes.forEach(el => {
+        const label = el.getAttribute("data-label");
+        if (!cbMap[label]) cbMap[label] = [];
+        if (el.checked) {
+          cbMap[label].push(el.value);
+        }
+      });
+      for (let label in cbMap) {
+        answers[label] = cbMap[label];
+      }
+
       submitBtn.disabled = true;
       submitBtn.textContent = "資料提交中...";
 
       const payload = {
         action: "submit",
         eventId: eventId,
-        name: document.getElementById("name").value.trim(),
-        className: document.getElementById("className").value.trim(),
-        seatNumber: document.getElementById("seatNumber").value.trim(),
         email: email,
         code: document.getElementById("code").value.trim(),
-        note: document.getElementById("note").value.trim()
+        answers: answers
       };
 
       fetch(GAS_URL, {
@@ -241,8 +303,7 @@
         headers: { "Content-Type": "text/plain;charset=utf-8" },
         body: JSON.stringify(payload)
       })
-      .then(res => res.text())
-      .then(text => JSON.parse(text))
+      .then(res => res.json())
       .then(res => {
         msgDiv.style.display = "block";
         if (res.status === "success") {
@@ -273,12 +334,10 @@
     let consecutiveErrors = 0;
 
     function checkSystemStatus(isInitialCheck = false) {
-      // 透過參數明確指定要檢查的試算表 ID
       fetch(`${GAS_URL}?action=checkLockStatus&spreadsheetId=${TARGET_SHEET_ID}&_t=${Date.now()}`)
         .then(res => res.json())
         .then(res => {
           if (res && res.status === "success") {
-            // 1. 若 B2 為 TRUE，前往維護頁面
             if (res.maintenance === true) {
               if (isInitialCheck) {
                 consecutiveErrors++;
@@ -293,7 +352,6 @@
               return;
             }
 
-            // 2. 若 A2 不是 FALSE (包含空白、TRUE 等)，前往上鎖頁面
             if (res.locked === true) {
               if (isInitialCheck) {
                 consecutiveErrors++;
@@ -319,10 +377,7 @@
     window.addEventListener("load", () => {
       if (window.location.pathname.includes("lock.html") || window.location.pathname.includes("maintenance.html")) return;
 
-      // 1. 頁面載入時高速連續 3 次檢查指定試算表
       checkSystemStatus(true);
-
-      // 2. 背景每 2 秒向指定試算表檢查一次
       setInterval(() => {
         checkSystemStatus(false);
       }, 2000);
