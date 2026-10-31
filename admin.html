@@ -53,6 +53,38 @@
       background: #ffeef0;
       color: #cf222e;
     }
+    /* 預覽 Modal 樣式 */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.5);
+      z-index: 1000;
+      justify-content: center;
+      align-items: center;
+    }
+    .modal-content {
+      background: #ffffff;
+      width: 90%; max-width: 700px; max-height: 90vh;
+      overflow-y: auto;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+      position: relative;
+    }
+    .modal-close {
+      position: absolute;
+      top: 15px; right: 20px;
+      background: transparent; border: none;
+      font-size: 20px; cursor: pointer; color: #57606a;
+    }
+    .preview-img {
+      max-width: 100%;
+      max-height: 200px;
+      border-radius: 6px;
+      margin-top: 8px;
+      border: 1px solid #d0d7de;
+    }
   </style>
 </head>
 <body>
@@ -143,7 +175,10 @@
 
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
           <h3 style="margin: 0; font-size: 18px;">📝 自訂報名表單題目</h3>
-          <button type="button" onclick="addQuestionBuilder()" class="btn-secondary" style="width: auto; padding: 6px 12px;">➕ 新增題目</button>
+          <div style="display: flex; gap: 10px;">
+            <button type="button" onclick="previewForm()" class="btn-secondary" style="width: auto; padding: 6px 14px; background-color: #ddf4ff; color: #0969da; border-color: #b6e3ff;">👁️ 預覽表單長相</button>
+            <button type="button" onclick="addQuestionBuilder()" class="btn-secondary" style="width: auto; padding: 6px 12px;">➕ 新增題目</button>
+          </div>
         </div>
 
         <div id="questionsContainer">
@@ -183,6 +218,20 @@
             <tr><td colspan="2" class="no-data">請先選擇上方活動以檢視報名清單。</td></tr>
           </tbody>
         </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- 預覽表單 Modal -->
+  <div id="previewModal" class="modal-overlay">
+    <div class="modal-content">
+      <button type="button" class="modal-close" onclick="closePreviewModal()">✕</button>
+      <h2 id="previewTitle" style="margin-top: 0; color: #1f2328;">活動名稱預覽</h2>
+      <p id="previewDesc" style="color: #57606a; margin-bottom: 20px; font-size: 14px;"></p>
+      <hr style="border: 0; border-top: 1px solid #d0d7de; margin-bottom: 20px;">
+      <div id="previewQuestionsContainer"></div>
+      <div style="margin-top: 30px; text-align: right;">
+        <button type="button" class="btn-secondary" onclick="closePreviewModal()" style="width: auto; padding: 8px 20px;">關閉預覽</button>
       </div>
     </div>
   </div>
@@ -323,7 +372,7 @@
         });
     }
 
-    function addQuestionBuilder(label = "", type = "text", required = true, options = []) {
+    function addQuestionBuilder(label = "", type = "text", required = true, options = [], imageUrl = "") {
       const container = document.getElementById("questionsContainer");
       const div = document.createElement("div");
       div.className = "question-builder-card";
@@ -332,7 +381,6 @@
       if (['radio', 'checkbox', 'select'].includes(type)) {
         if (!options || options.length === 0) options = [{ text: "選項 1", isOther: false }];
         options.forEach(opt => {
-          // 兼容舊資料結構 (如果 options 裡直接是字串)
           const optObj = typeof opt === 'string' ? { text: opt, isOther: false } : opt;
           optionsHtml += `
             <div class="option-item-row">
@@ -364,6 +412,20 @@
             </select>
           </div>
         </div>
+
+        <!-- 圖片上傳區塊 -->
+        <div class="form-group" style="margin-top: 12px;">
+          <label>題目附加圖片（選填）</label>
+          <div style="display: flex; gap: 10px; align-items: center;">
+            <input type="file" accept="image/*" class="form-control q-image-file" onchange="handleImageUpload(this)" style="padding: 6px;">
+            <button type="button" class="btn-secondary" onclick="clearQuestionImage(this)" style="width: auto; padding: 6px 10px; font-size: 13px; background-color: #ffeef0; color: #cf222e; border-color: #ffc1c0;">移除圖片</button>
+          </div>
+          <input type="hidden" class="q-image-url" value="${imageUrl || ''}">
+          <div class="image-preview-box" style="margin-top: 8px; display: ${imageUrl ? 'block' : 'none'};">
+            <img src="${imageUrl || ''}" class="preview-img q-img-tag">
+          </div>
+        </div>
+
         <div class="options-container options-box" style="display: ${['radio','checkbox','select'].includes(type) ? 'block' : 'none'};">
           <label style="margin-bottom: 8px; display: block; font-weight: 600;">選項設定</label>
           <div class="options-list">
@@ -376,6 +438,36 @@
         </div>
       `;
       container.appendChild(div);
+    }
+
+    function handleImageUpload(inputEl) {
+      const file = inputEl.files[0];
+      if (!file) return;
+
+      if (file.size > 1024 * 1024 * 2) {
+        alert("圖片檔案過大！請上傳小於 2MB 的圖片。");
+        inputEl.value = "";
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const base64Str = e.target.result;
+        const card = inputEl.closest('.question-builder-card');
+        card.querySelector('.q-image-url').value = base64Str;
+        const imgTag = card.querySelector('.q-img-tag');
+        imgTag.src = base64Str;
+        card.querySelector('.image-preview-box').style.display = 'block';
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function clearQuestionImage(btnEl) {
+      const card = btnEl.closest('.question-builder-card');
+      card.querySelector('.q-image-file').value = "";
+      card.querySelector('.q-image-url').value = "";
+      card.querySelector('.q-img-tag').src = "";
+      card.querySelector('.image-preview-box').style.display = 'none';
     }
 
     function toggleOptionsInput(selectEl) {
@@ -408,6 +500,92 @@
         <button type="button" class="btn-delete-option" onclick="this.parentElement.remove()" title="刪除選項">✕</button>
       `;
       optionsList.appendChild(row);
+    }
+
+    // 👁️ 預覽表單功能
+    function previewForm() {
+      const eventName = document.getElementById("newEventName").value.trim() || "未命名活動";
+      const eventDesc = document.getElementById("newEventDesc").value.trim() || "無活動說明";
+      
+      document.getElementById("previewTitle").textContent = eventName;
+      document.getElementById("previewDesc").textContent = eventDesc;
+
+      const container = document.getElementById("previewQuestionsContainer");
+      container.innerHTML = "";
+
+      const qCards = document.querySelectorAll(".question-builder-card");
+      if (qCards.length === 0) {
+        container.innerHTML = "<p style='color: #cf222e;'>尚未設定任何題目。</p>";
+        document.getElementById("previewModal").style.display = "flex";
+        return;
+      }
+
+      qCards.forEach((card, index) => {
+        const label = card.querySelector(".q-label").value.trim() || `未命名題目 ${index + 1}`;
+        const type = card.querySelector(".q-type").value;
+        const required = card.querySelector(".q-required").checked;
+        const imageUrl = card.querySelector(".q-image-url").value;
+
+        const div = document.createElement("div");
+        div.className = "form-group";
+        div.style.marginBottom = "25px";
+        div.style.background = "#f6f8fa";
+        div.style.padding = "15px";
+        div.style.borderRadius = "8px";
+        div.style.border = "1px solid #d0d7de";
+
+        let labelHTML = `<label style="font-weight: 600; font-size: 15px;">${label} ${required ? '<span style="color:red;">*</span>' : ''}</label>`;
+        let imgHTML = imageUrl ? `<div style="margin-top: 8px;"><img src="${imageUrl}" class="preview-img"></div>` : "";
+        let inputHTML = "";
+
+        if (type === "text") {
+          inputHTML = `<input type="text" class="form-control" disabled placeholder="簡答文字輸入區">`;
+        } else if (type === "textarea") {
+          inputHTML = `<textarea class="form-control" rows="3" disabled placeholder="長文字說明輸入區"></textarea>`;
+        } else if (type === "select") {
+          let opts = `<option value="">-- 請選擇 --</option>`;
+          const optRows = card.querySelectorAll(".option-item-row");
+          optRows.forEach(row => {
+            const text = row.querySelector(".option-input").value.trim();
+            const isOther = row.querySelector(".option-is-other").checked;
+            if (text || isOther) {
+              opts += `<option value="${text || '其他'}">${text || '其他'}${isOther ? ' (含自訂填寫)' : ''}</option>`;
+            }
+          });
+          inputHTML = `<select class="form-control" disabled>${opts}</select>`;
+        } else if (type === "radio") {
+          let opts = "";
+          const optRows = card.querySelectorAll(".option-item-row");
+          optRows.forEach(row => {
+            const text = row.querySelector(".option-input").value.trim();
+            const isOther = row.querySelector(".option-is-other").checked;
+            if (text || isOther) {
+              opts += `<div style="margin-top: 6px;"><label style="font-weight: normal;"><input type="radio" disabled> ${text || '其他'}</label></div>`;
+            }
+          });
+          inputHTML = opts;
+        } else if (type === "checkbox") {
+          let opts = "";
+          const optRows = card.querySelectorAll(".option-item-row");
+          optRows.forEach(row => {
+            const text = row.querySelector(".option-input").value.trim();
+            const isOther = row.querySelector(".option-is-other").checked;
+            if (text || isOther) {
+              opts += `<div style="margin-top: 6px;"><label style="font-weight: normal;"><input type="checkbox" disabled> ${text || '其他'}</label></div>`;
+            }
+          });
+          inputHTML = opts;
+        }
+
+        div.innerHTML = labelHTML + imgHTML + `<div style="margin-top: 10px;">${inputHTML}</div>`;
+        container.appendChild(div);
+      });
+
+      document.getElementById("previewModal").style.display = "flex";
+    }
+
+    function closePreviewModal() {
+      document.getElementById("previewModal").style.display = "none";
     }
 
     function loadAdminEvents() {
@@ -500,6 +678,7 @@
         const label = card.querySelector(".q-label").value.trim();
         const type = card.querySelector(".q-type").value;
         const required = card.querySelector(".q-required").checked;
+        const imageUrl = card.querySelector(".q-image-url").value;
         
         let options = [];
         if (['radio', 'checkbox', 'select'].includes(type)) {
@@ -514,7 +693,7 @@
         }
 
         if (label) {
-          questions.push({ label, type, required, options });
+          questions.push({ label, type, required, options, imageUrl });
         }
       });
 
