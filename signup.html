@@ -5,6 +5,15 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>TSSC13TH - 活動報名專區</title>
   <link rel="stylesheet" href="style.css">
+  <style>
+    .question-img {
+      max-width: 100%;
+      max-height: 250px;
+      border-radius: 6px;
+      margin-top: 8px;
+      border: 1px solid #d0d7de;
+    }
+  </style>
 </head>
 <body>
   <!-- 頂部導覽列 -->
@@ -15,6 +24,7 @@
     </a>
     <div class="nav-menu">
       <a href="index.html" class="nav-btn active">首頁與通知</a>
+      <a href="resend.html" class="nav-btn">🔍 查詢我的報名</a>
     </div>
   </header>
 
@@ -43,7 +53,7 @@
       <div class="form-group" style="margin-top: 25px;">
         <label for="email">學校官方電子信箱 (@tshcmc.edu.vn) *</label>
         <div class="input-with-btn">
-          <input type="email" id="email" class="form-control" required placeholder="s123456@tshcmc.edu.vn" pattern="^\d{7}@tshcmc\.edu\.vn$">
+          <input type="email" id="email" class="form-control" required placeholder="1234567@tshcmc.edu.vn" pattern="^\d{7}@tshcmc\.edu\.vn$">
           <button type="button" id="sendCodeBtn" class="btn-verify" onclick="sendVerificationCode()">發送驗證碼</button>
         </div>
       </div>
@@ -51,7 +61,7 @@
       <div class="form-group">
         <label for="code">信箱驗證碼 (6 位數字) *</label>
         <input type="text" id="code" class="form-control" required placeholder="請輸入 6 位數驗證碼" maxlength="6">
-        <small class="hint-text">請輸入寄送至您學校信箱中的 6 位數一次性驗證碼（有效期限 5 分鐘，每人每天最多發送 3 次）。</small>
+        <small class="hint-text">請輸入寄送至您學校信箱中的 6 位數一次性驗證碼（有效期限 5 分鐘，每人每天最多發送 5 次）。</small>
       </div>
 
       <button type="submit" id="submitBtn" class="btn-submit" style="margin-top: 20px;">確認並送出報名</button>
@@ -134,42 +144,133 @@
 
         questions.forEach((q, index) => {
           const div = document.createElement("div");
-          div.className = "form-group";
-          div.style.marginBottom = "20px";
+          div.className = "form-group question-card-item";
+          div.setAttribute("data-label", q.label);
+          div.setAttribute("data-type", q.type);
+          div.style.marginBottom = "25px";
+          div.style.background = "#f6f8fa";
+          div.style.padding = "15px";
+          div.style.borderRadius = "8px";
+          div.style.border = "1px solid #d0d7de";
 
-          let labelHTML = `<label>${q.label} ${q.required ? '<span style="color:red;">*</span>' : ''}</label>`;
+          let labelHTML = `<label style="font-weight: 600; font-size: 15px;">${q.label} ${q.required ? '<span style="color:red;">*</span>' : ''}</label>`;
+          let imgHTML = q.imageUrl ? `<div style="margin-top: 8px;"><img src="${q.imageUrl}" class="question-img"></div>` : "";
           let inputHTML = "";
 
           if (q.type === "text") {
-            inputHTML = `<input type="text" class="form-control dynamic-input" data-label="${q.label}" ${q.required ? 'required' : ''} placeholder="請輸入${q.label}">`;
+            inputHTML = `<input type="text" class="form-control dynamic-input" ${q.required ? 'required' : ''} placeholder="請輸入${q.label}">`;
           } else if (q.type === "textarea") {
-            inputHTML = `<textarea class="form-control dynamic-input" data-label="${q.label}" rows="3" ${q.required ? 'required' : ''} placeholder="請輸入${q.label}"></textarea>`;
+            inputHTML = `<textarea class="form-control dynamic-input" rows="3" ${q.required ? 'required' : ''} placeholder="請輸入${q.label}"></textarea>`;
           } else if (q.type === "select") {
             let opts = `<option value="">-- 請選擇 --</option>`;
+            let hasOther = false;
             (q.options || []).forEach(opt => {
-              opts += `<option value="${opt}">${opt}</option>`;
+              const optObj = typeof opt === 'string' ? { text: opt, isOther: false } : opt;
+              if (optObj.isOther) {
+                hasOther = true;
+                opts += `<option value="other_option">其他...</option>`;
+              } else {
+                opts += `<option value="${optObj.text}">${optObj.text}</option>`;
+              }
             });
-            inputHTML = `<select class="form-control dynamic-input" data-label="${q.label}" ${q.required ? 'required' : ''}>${opts}</select>`;
+            inputHTML = `<select class="form-control dynamic-select" ${q.required ? 'required' : ''} onchange="handleSelectOther(this)">${opts}</select>`;
+            if (hasOther) {
+              inputHTML += `<input type="text" class="form-control select-other-input" style="margin-top: 8px; display: none;" placeholder="請輸入其他內容">`;
+            }
           } else if (q.type === "radio") {
             let opts = "";
             (q.options || []).forEach(opt => {
-              opts += `<div style="margin-top: 6px;"><label style="font-weight: normal; cursor: pointer;"><input type="radio" name="q_${index}" value="${opt}" class="dynamic-input" data-label="${q.label}" ${q.required ? 'required' : ''}> ${opt}</label></div>`;
+              const optObj = typeof opt === 'string' ? { text: opt, isOther: false } : opt;
+              if (optObj.isOther) {
+                opts += `
+                  <div style="margin-top: 6px; display: flex; align-items: center; gap: 8px;">
+                    <label style="font-weight: normal; display: flex; align-items: center; gap: 4px; margin: 0; cursor: pointer;">
+                      <input type="radio" name="q_${index}" value="other" class="dynamic-radio" onchange="handleRadioOther(this)"> 其他：
+                    </label>
+                    <input type="text" class="form-control radio-other-input" disabled placeholder="請自行填寫" style="flex: 1; padding: 4px 8px; font-size: 13px;">
+                  </div>
+                `;
+              } else {
+                opts += `<div style="margin-top: 6px;"><label style="font-weight: normal; cursor: pointer;"><input type="radio" name="q_${index}" value="${optObj.text}" class="dynamic-radio" onchange="handleRadioOther(this)"> ${optObj.text}</label></div>`;
+              }
             });
             inputHTML = opts;
           } else if (q.type === "checkbox") {
             let opts = "";
             (q.options || []).forEach(opt => {
-              opts += `<div style="margin-top: 6px;"><label style="font-weight: normal; cursor: pointer;"><input type="checkbox" value="${opt}" class="dynamic-checkbox" data-label="${q.label}"> ${opt}</label></div>`;
+              const optObj = typeof opt === 'string' ? { text: opt, isOther: false } : opt;
+              if (optObj.isOther) {
+                opts += `
+                  <div style="margin-top: 6px; display: flex; align-items: center; gap: 8px;">
+                    <label style="font-weight: normal; display: flex; align-items: center; gap: 4px; margin: 0; cursor: pointer;">
+                      <input type="checkbox" value="other" class="dynamic-checkbox" onchange="handleCheckboxOther(this)"> 其他：
+                    </label>
+                    <input type="text" class="form-control checkbox-other-input" disabled placeholder="請自行填寫" style="flex: 1; padding: 4px 8px; font-size: 13px;">
+                  </div>
+                `;
+              } else {
+                opts += `<div style="margin-top: 6px;"><label style="font-weight: normal; cursor: pointer;"><input type="checkbox" value="${optObj.text}" class="dynamic-checkbox"> ${optObj.text}</label></div>`;
+              }
             });
             inputHTML = opts;
           }
 
-          div.innerHTML = labelHTML + inputHTML;
+          div.innerHTML = labelHTML + imgHTML + `<div style="margin-top: 10px;">${inputHTML}</div>`;
           container.appendChild(div);
         });
       } catch (err) {
         console.error(err);
         container.innerHTML = "<p style='color:red;'>題目載入解析失敗。</p>";
+      }
+    }
+
+    // "其他" 選項互動控制邏輯
+    function handleSelectOther(selectEl) {
+      const card = selectEl.closest('.question-card-item');
+      const otherInput = card.querySelector('.select-other-input');
+      if (otherInput) {
+        if (selectEl.value === "other_option") {
+          otherInput.style.display = "block";
+          otherInput.required = true;
+        } else {
+          otherInput.style.display = "none";
+          otherInput.value = "";
+          otherInput.required = false;
+        }
+      }
+    }
+
+    function handleRadioOther(radioEl) {
+      const card = radioEl.closest('.question-card-item');
+      const radios = card.querySelectorAll('.dynamic-radio');
+      radios.forEach(r => {
+        const row = r.closest('div') || r.parentElement;
+        const input = row.querySelector('.radio-other-input');
+        if (input) {
+          if (r.checked) {
+            input.disabled = false;
+            input.required = true;
+          } else {
+            input.disabled = true;
+            input.value = "";
+            input.required = false;
+          }
+        }
+      });
+    }
+
+    function handleCheckboxOther(cbEl) {
+      const row = cbEl.closest('div') || cbEl.parentElement;
+      const input = row.querySelector('.checkbox-other-input');
+      if (input) {
+        if (cbEl.checked) {
+          input.disabled = false;
+          input.required = true;
+        } else {
+          input.disabled = true;
+          input.value = "";
+          input.required = false;
+        }
       }
     }
 
@@ -197,6 +298,7 @@
         if (res.status === "success") {
           msgDiv.className = "message success";
           msgDiv.textContent = res.message;
+          document.getElementById("code").value = "";
           startCountdown(120);
         } else {
           msgDiv.className = "message error";
@@ -261,31 +363,49 @@
 
       // 收集動態表單的答案
       let answers = {};
-      
-      // 1. 收集普通文字、長文字、下拉與單選
-      const inputs = document.querySelectorAll(".dynamic-input");
-      inputs.forEach(el => {
-        const label = el.getAttribute("data-label");
-        if (el.type === "radio") {
-          if (el.checked) answers[label] = el.value;
-        } else {
-          answers[label] = el.value.trim();
-        }
-      });
+      const questionCards = document.querySelectorAll(".question-card-item");
 
-      // 2. 收集核取方塊 (多選)
-      const checkboxes = document.querySelectorAll(".dynamic-checkbox");
-      let cbMap = {};
-      checkboxes.forEach(el => {
-        const label = el.getAttribute("data-label");
-        if (!cbMap[label]) cbMap[label] = [];
-        if (el.checked) {
-          cbMap[label].push(el.value);
+      questionCards.forEach(card => {
+        const label = card.getAttribute("data-label");
+        const type = card.getAttribute("data-type");
+
+        if (type === "text" || type === "textarea") {
+          const input = card.querySelector("input, textarea");
+          if (input) answers[label] = input.value.trim();
+        } else if (type === "select") {
+          const select = card.querySelector("select");
+          const otherInput = card.querySelector(".select-other-input");
+          if (select.value === "other_option") {
+            answers[label] = "其他：" + (otherInput ? otherInput.value.trim() : "");
+          } else {
+            answers[label] = select.value;
+          }
+        } else if (type === "radio") {
+          const checkedRadio = card.querySelector("input[type='radio']:checked");
+          if (checkedRadio) {
+            if (checkedRadio.value === "other") {
+              const otherInput = card.querySelector(".radio-other-input");
+              answers[label] = "其他：" + (otherInput ? otherInput.value.trim() : "");
+            } else {
+              answers[label] = checkedRadio.value;
+            }
+          } else {
+            answers[label] = "";
+          }
+        } else if (type === "checkbox") {
+          const checkedBoxes = card.querySelectorAll("input[type='checkbox']:checked");
+          let values = [];
+          checkedBoxes.forEach(cb => {
+            if (cb.value === "other") {
+              const otherInput = cb.closest("div").querySelector(".checkbox-other-input");
+              values.push("其他：" + (otherInput ? otherInput.value.trim() : ""));
+            } else {
+              values.push(cb.value);
+            }
+          });
+          answers[label] = values;
         }
       });
-      for (let label in cbMap) {
-        answers[label] = cbMap[label];
-      }
 
       submitBtn.disabled = true;
       submitBtn.textContent = "資料提交中...";

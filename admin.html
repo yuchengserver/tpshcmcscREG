@@ -549,7 +549,11 @@
             const text = row.querySelector(".option-input").value.trim();
             const isOther = row.querySelector(".option-is-other").checked;
             if (text || isOther) {
-              opts += `<option value="${text || '其他'}">${text || '其他'}${isOther ? ' (含自訂填寫)' : ''}</option>`;
+              if (isOther) {
+                opts += `<option value="其他">其他：(可自行填寫)</option>`;
+              } else {
+                opts += `<option value="${text}">${text}</option>`;
+              }
             }
           });
           inputHTML = `<select class="form-control" disabled>${opts}</select>`;
@@ -560,7 +564,11 @@
             const text = row.querySelector(".option-input").value.trim();
             const isOther = row.querySelector(".option-is-other").checked;
             if (text || isOther) {
-              opts += `<div style="margin-top: 6px;"><label style="font-weight: normal;"><input type="radio" disabled> ${text || '其他'}</label></div>`;
+              if (isOther) {
+                opts += `<div style="margin-top: 6px; display: flex; align-items: center; gap: 8px;"><label style="font-weight: normal; display: flex; align-items: center; gap: 4px; margin: 0;"><input type="radio" disabled> 其他：</label> <input type="text" class="form-control" disabled placeholder="請自行填寫" style="flex: 1; padding: 4px 8px; font-size: 13px;"></div>`;
+              } else {
+                opts += `<div style="margin-top: 6px;"><label style="font-weight: normal;"><input type="radio" disabled> ${text}</label></div>`;
+              }
             }
           });
           inputHTML = opts;
@@ -571,7 +579,11 @@
             const text = row.querySelector(".option-input").value.trim();
             const isOther = row.querySelector(".option-is-other").checked;
             if (text || isOther) {
-              opts += `<div style="margin-top: 6px;"><label style="font-weight: normal;"><input type="checkbox" disabled> ${text || '其他'}</label></div>`;
+              if (isOther) {
+                opts += `<div style="margin-top: 6px; display: flex; align-items: center; gap: 8px;"><label style="font-weight: normal; display: flex; align-items: center; gap: 4px; margin: 0;"><input type="checkbox" disabled> 其他：</label> <input type="text" class="form-control" disabled placeholder="請自行填寫" style="flex: 1; padding: 4px 8px; font-size: 13px;"></div>`;
+              } else {
+                opts += `<div style="margin-top: 6px;"><label style="font-weight: normal;"><input type="checkbox" disabled> ${text}</label></div>`;
+              }
             }
           });
           inputHTML = opts;
