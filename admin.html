@@ -27,14 +27,33 @@
       font-size: 12px;
     }
     .options-box {
-      margin-top: 10px;
+      margin-top: 12px;
       padding-left: 15px;
       border-left: 3px solid #0969da;
+    }
+    .option-item-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+    .btn-delete-option {
+      background: transparent;
+      border: none;
+      color: #57606a;
+      cursor: pointer;
+      font-size: 16px;
+      padding: 4px 8px;
+      border-radius: 4px;
+    }
+    .btn-delete-option:hover {
+      background: #ffeef0;
+      color: #cf222e;
     }
   </style>
 </head>
 <body>
-  <!-- 頂部導覽列 -->
+  
   <header class="navbar">
     <a href="index.html" class="nav-brand">
       <img src="tpshcmcsc.png" alt="TSSC Logo" class="nav-logo">
@@ -46,7 +65,7 @@
     </div>
   </header>
 
-  <!-- 未登入畫面 -->
+  
   <div id="loginSection" class="login-card-wrapper" style="margin-top: 60px;">
     <div class="login-card">
       <div class="login-icon">🔐</div>
@@ -66,9 +85,9 @@
     </div>
   </div>
 
-  <!-- 已登入後台主畫面 -->
+
   <div id="adminContent" class="container wide" style="display:none; margin-top: 30px;">
-    <!-- 頂部標題與登出列 -->
+    
     <div class="admin-top-bar">
       <div>
         <h2 style="margin: 0; font-size: 22px; color: #1f2328;">TSSC13TH 後台管理系統</h2>
@@ -77,13 +96,13 @@
       <button onclick="logout()" class="btn-secondary" style="background-color: #ffeef0; color: #cf222e; border-color: #ffc1c0; width:auto; padding: 8px 16px;">🚪 登出</button>
     </div>
 
-    <!-- 上方功能頁籤 (左邊：建立活動，右邊：報名資料) -->
+  
     <div class="admin-tabs">
       <button id="tabCreateBtn" class="admin-tab-btn active" onclick="switchTab('create')">➕ 建立 / 編輯活動</button>
       <button id="tabListBtn" class="admin-tab-btn" onclick="switchTab('list')">📋 報名者資料查詢</button>
     </div>
 
-    <!-- 區塊一：建立新活動與動態題目設定 -->
+    
     <div id="createSection" class="admin-section">
       <div class="section-badge-header">
         <span class="section-tag create-tag">➕ 建立活動與自訂表單題目</span>
@@ -125,7 +144,7 @@
         </div>
 
         <div id="questionsContainer">
-          <!-- 動態題目產生處 -->
+          
         </div>
 
         <button type="button" class="btn-submit" id="createBtn" onclick="submitCreateEvent()" style="margin-top: 20px;">送出建立 / 更新活動</button>
@@ -133,7 +152,7 @@
       <div id="createMsg" class="message" style="display:none; margin-top: 15px;"></div>
     </div>
 
-    <!-- 區塊二：已報名者資料列表 (預設隱藏，切換頁籤顯示) -->
+    
     <div id="listSection" class="admin-section" style="display: none;">
       <div class="admin-header-flex">
         <span class="section-tag list-tag">📋 已報名者資料列表</span>
@@ -280,7 +299,6 @@
             document.getElementById("adminContent").style.display = "block";
             switchTab('create');
             
-            // 預設帶入基本範例欄位（姓名、班級、座號）
             if (document.getElementById("questionsContainer").children.length === 0) {
               addQuestionBuilder("姓名", "text", true);
               addQuestionBuilder("班級", "text", true);
@@ -302,10 +320,24 @@
         });
     }
 
-    function addQuestionBuilder(label = "", type = "text", required = true, options = "") {
+    function addQuestionBuilder(label = "", type = "text", required = true, options = []) {
       const container = document.getElementById("questionsContainer");
       const div = document.createElement("div");
       div.className = "question-builder-card";
+      
+      let optionsHtml = '';
+      if (['radio', 'checkbox', 'select'].includes(type)) {
+        if (!options || options.length === 0) options = ["選項 1"];
+        options.forEach(opt => {
+          optionsHtml += `
+            <div class="option-item-row">
+              <input type="text" class="form-control option-input" value="${opt}" placeholder="輸入選項內容">
+              <button type="button" class="btn-delete-option" onclick="this.parentElement.remove()" title="刪除選項">✕</button>
+            </div>
+          `;
+        });
+      }
+
       div.innerHTML = `
         <button type="button" class="btn-delete-q" onclick="this.parentElement.remove()">刪除此題</button>
         <div class="form-row">
@@ -325,10 +357,13 @@
           </div>
         </div>
         <div class="options-container options-box" style="display: ${['radio','checkbox','select'].includes(type) ? 'block' : 'none'};">
-          <label>選項設定 (請用半形逗號 , 隔開選項)</label>
-          <input type="text" class="form-control q-options" value="${options}" placeholder="例如：選項A, 選項B, 選項C">
+          <label style="margin-bottom: 8px; display: block; font-weight: 600;">選項設定</label>
+          <div class="options-list">
+            ${optionsHtml}
+          </div>
+          <button type="button" class="btn-secondary" onclick="addOptionItem(this)" style="margin-top: 8px; width: auto; padding: 4px 10px; font-size: 13px;">➕ 新增選項</button>
         </div>
-        <div style="margin-top: 10px;">
+        <div style="margin-top: 15px;">
           <label><input type="checkbox" class="q-required" ${required ? 'checked' : ''}> 此題設為必填</label>
         </div>
       `;
@@ -338,12 +373,30 @@
     function toggleOptionsInput(selectEl) {
       const card = selectEl.closest('.question-builder-card');
       const optContainer = card.querySelector('.options-container');
+      const optionsList = card.querySelector('.options-list');
       const val = selectEl.value;
       if (['radio', 'checkbox', 'select'].includes(val)) {
         optContainer.style.display = 'block';
+        if (optionsList.children.length === 0) {
+          addOptionItem(selectEl);
+        }
       } else {
         optContainer.style.display = 'none';
       }
+    }
+
+    function addOptionItem(el) {
+      const card = el.closest('.question-builder-card');
+      const optionsList = card.querySelector('.options-list');
+      const optCount = optionsList.children.length + 1;
+      
+      const row = document.createElement("div");
+      row.className = "option-item-row";
+      row.innerHTML = `
+        <input type="text" class="form-control option-input" value="選項 ${optCount}" placeholder="輸入選項內容">
+        <button type="button" class="btn-delete-option" onclick="this.parentElement.remove()" title="刪除選項">✕</button>
+      `;
+      optionsList.appendChild(row);
     }
 
     function loadAdminEvents() {
@@ -436,8 +489,15 @@
         const label = card.querySelector(".q-label").value.trim();
         const type = card.querySelector(".q-type").value;
         const required = card.querySelector(".q-required").checked;
-        const rawOpts = card.querySelector(".q-options").value;
-        const options = rawOpts ? rawOpts.split(",").map(s => s.trim()).filter(s => s) : [];
+        
+        let options = [];
+        if (['radio', 'checkbox', 'select'].includes(type)) {
+          const optInputs = card.querySelectorAll(".option-input");
+          optInputs.forEach(inp => {
+            const val = inp.value.trim();
+            if (val) options.push(val);
+          });
+        }
 
         if (label) {
           questions.push({ label, type, required, options });
@@ -501,7 +561,7 @@
       document.getElementById("loginMsg").style.display = "none";
     }
 
-    // --- 🔒 嚴格指定監控特定試算表的狀態機制 ---
+    
     let consecutiveErrors = 0;
 
     function checkSystemStatus(isInitialCheck = false) {
