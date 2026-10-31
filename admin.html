@@ -563,7 +563,11 @@
         let limitHint = "";
         if (type === "checkbox" && (minSelect > 0 || maxSelect > 0)) {
           if (minSelect > 0 && maxSelect > 0) {
-            limitHint = ` <small style="color: #0969da; font-weight: normal;">(須選 ${minSelect} ~ ${maxSelect} 項)</small>`;
+            if (minSelect === maxSelect) {
+              limitHint = ` <small style="color: #0969da; font-weight: normal;">(須選 ${minSelect} 項)</small>`;
+            } else {
+              limitHint = ` <small style="color: #0969da; font-weight: normal;">(須選 ${minSelect} ~ ${maxSelect} 項)</small>`;
+            }
           } else if (minSelect > 0) {
             limitHint = ` <small style="color: #0969da; font-weight: normal;">(至少選 ${minSelect} 項)</small>`;
           } else if (maxSelect > 0) {

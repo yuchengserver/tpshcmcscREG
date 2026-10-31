@@ -147,13 +147,30 @@
           div.className = "form-group question-card-item";
           div.setAttribute("data-label", q.label);
           div.setAttribute("data-type", q.type);
+          div.setAttribute("data-min", q.minSelect || 0);
+          div.setAttribute("data-max", q.maxSelect || 0);
           div.style.marginBottom = "25px";
           div.style.background = "#f6f8fa";
           div.style.padding = "15px";
           div.style.borderRadius = "8px";
           div.style.border = "1px solid #d0d7de";
 
-          let labelHTML = `<label style="font-weight: 600; font-size: 15px;">${q.label} ${q.required ? '<span style="color:red;">*</span>' : ''}</label>`;
+          let limitHint = "";
+          if (q.type === "checkbox" && (q.minSelect > 0 || q.maxSelect > 0)) {
+            if (q.minSelect > 0 && q.maxSelect > 0) {
+              if (q.minSelect === q.maxSelect) {
+                limitHint = ` <small style="color: #0969da; font-weight: normal;">(須選 ${q.minSelect} 項)</small>`;
+              } else {
+                limitHint = ` <small style="color: #0969da; font-weight: normal;">(須選 ${q.minSelect} ~ ${q.maxSelect} 項)</small>`;
+              }
+            } else if (q.minSelect > 0) {
+              limitHint = ` <small style="color: #0969da; font-weight: normal;">(至少選 ${q.minSelect} 項)</small>`;
+            } else if (q.maxSelect > 0) {
+              limitHint = ` <small style="color: #0969da; font-weight: normal;">(最多選 ${q.maxSelect} 項)</small>`;
+            }
+          }
+
+          let labelHTML = `<label style="font-weight: 600; font-size: 15px;">${q.label} ${q.required ? '<span style="color:red;">*</span>' : ''}${limitHint}</label>`;
           let imgHTML = q.imageUrl ? `<div style="margin-top: 8px;"><img src="${q.imageUrl}" class="question-img"></div>` : "";
           let inputHTML = "";
 
@@ -203,7 +220,7 @@
                 opts += `
                   <div style="margin-top: 6px; display: flex; align-items: center; gap: 8px;">
                     <label style="font-weight: normal; display: flex; align-items: center; gap: 4px; margin: 0; cursor: pointer;">
-                      <input type="checkbox" value="other" class="dynamic-checkbox" onchange="handleCheckboxOther(this)"> 其他：
+                      <input type="checkbox" value="other" class="dynamic-checkbox"> 其他：
                     </label>
                     <input type="text" class="form-control checkbox-other-input" disabled placeholder="請自行填寫" style="flex: 1; padding: 4px 8px; font-size: 13px;">
                   </div>
@@ -218,13 +235,31 @@
           div.innerHTML = labelHTML + imgHTML + `<div style="margin-top: 10px;">${inputHTML}</div>`;
           container.appendChild(div);
         });
+
+        // 為所有 checkbox 綁定即時監聽（用於「其他」輸入框啟用與連動）
+        document.querySelectorAll(".dynamic-checkbox").forEach(cb => {
+          cb.addEventListener("change", function() {
+            const row = this.closest('div') || this.parentElement;
+            const input = row.querySelector('.checkbox-other-input');
+            if (input) {
+              if (this.checked) {
+                input.disabled = false;
+                input.required = true;
+              } else {
+                input.disabled = true;
+                input.value = "";
+                input.required = false;
+              }
+            }
+          });
+        });
+
       } catch (err) {
         console.error(err);
         container.innerHTML = "<p style='color:red;'>題目載入解析失敗。</p>";
       }
     }
 
-    // "其他" 選項互動控制邏輯
     function handleSelectOther(selectEl) {
       const card = selectEl.closest('.question-card-item');
       const otherInput = card.querySelector('.select-other-input');
@@ -257,21 +292,6 @@
           }
         }
       });
-    }
-
-    function handleCheckboxOther(cbEl) {
-      const row = cbEl.closest('div') || cbEl.parentElement;
-      const input = row.querySelector('.checkbox-other-input');
-      if (input) {
-        if (cbEl.checked) {
-          input.disabled = false;
-          input.required = true;
-        } else {
-          input.disabled = true;
-          input.value = "";
-          input.required = false;
-        }
-      }
     }
 
     function sendVerificationCode() {
@@ -345,6 +365,41 @@
         }
       }
 
+      // 檢查多選題的選取數量限制
+      let isValidSelection = true;
+      const questionCards = document.querySelectorAll(".question-card-item");
+      
+      questionCards.forEach(card => {
+        const type = card.getAttribute("data-type");
+        if (type === "checkbox") {
+          const label = card.getAttribute("data-label");
+          const minSelect = parseInt(card.getAttribute("data-min") || 0);
+          const maxSelect = parseInt(card.getAttribute("data-max") || 0);
+          const checkedCount = card.querySelectorAll("input[type='checkbox']:checked").length;
+
+          if (minSelect > 0 && maxSelect > 0 && minSelect === maxSelect) {
+            if (checkedCount !== minSelect) {
+              alert(`「${label}」須剛好選取 ${minSelect} 個選項！（目前選了 ${checkedCount} 個）`);
+              isValidSelection = false;
+              return;
+            }
+          } else {
+            if (minSelect > 0 && checkedCount < minSelect) {
+              alert(`「${label}」至少需選取 ${minSelect} 個選項！（目前選了 ${checkedCount} 個）`);
+              isValidSelection = false;
+              return;
+            }
+            if (maxSelect > 0 && checkedCount > maxSelect) {
+              alert(`「${label}」最多只能選取 ${maxSelect} 個選項！（目前選了 ${checkedCount} 個）`);
+              isValidSelection = false;
+              return;
+            }
+          }
+        }
+      });
+
+      if (!isValidSelection) return;
+
       const submitBtn = document.getElementById("submitBtn");
       const msgDiv = document.getElementById("message");
 
@@ -363,7 +418,6 @@
 
       // 收集動態表單的答案
       let answers = {};
-      const questionCards = document.querySelectorAll(".question-card-item");
 
       questionCards.forEach(card => {
         const label = card.getAttribute("data-label");
