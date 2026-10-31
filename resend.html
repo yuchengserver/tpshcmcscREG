@@ -21,33 +21,38 @@
   <div class="container wide">
     <p style="margin-bottom: 15px;"><a href="index.html" class="back-link">← 返回活動列表</a></p>
 
-    <div class="rule-card">
-      <h3>🔍 查詢與管理我的報名紀錄</h3>
-      <p style="margin-top: 8px; color: #57606a;">請輸入您的學校信箱並取得驗證碼，即可查看您所有報名過的活動。若活動仍在開放報名時間內，您可以選擇直接取消報名或重新報名。</p>
-    </div>
+    <!-- 驗證區塊 (預設顯示) -->
+    <div id="authSection">
+      <div class="rule-card">
+        <h3>🔍 查詢與管理我的報名紀錄</h3>
+        <p style="margin-top: 8px; color: #57606a;">請輸入您的學校信箱並取得驗證碼，即可查看您所有報名過的活動。若活動仍在開放報名時間內，您可以選擇直接取消報名或重新報名。</p>
+      </div>
 
-    <!-- 驗證區塊 -->
-    <div class="login-card" style="max-width: 600px; margin: 30px auto; padding: 25px;">
-      <div class="form-group">
-        <label for="email">學校官方電子信箱 (@tshcmc.edu.vn) *</label>
-        <div class="input-with-btn">
-          <input type="email" id="email" class="form-control" required placeholder="s123456@tshcmc.edu.vn">
-          <button type="button" id="sendCodeBtn" class="btn-verify" onclick="sendVerificationCode()">發送驗證碼</button>
+      <div class="login-card" style="max-width: 600px; margin: 30px auto; padding: 25px;">
+        <div class="form-group">
+          <label for="email">學校官方電子信箱 (@tshcmc.edu.vn) *</label>
+          <div class="input-with-btn">
+            <input type="email" id="email" class="form-control" required placeholder="1234567@tshcmc.edu.vn">
+            <button type="button" id="sendCodeBtn" class="btn-verify" onclick="sendVerificationCode()">發送驗證碼</button>
+          </div>
         </div>
-      </div>
 
-      <div class="form-group" style="margin-top: 15px;">
-        <label for="code">信箱驗證碼 (6 位數字) *</label>
-        <input type="text" id="code" class="form-control" required placeholder="請輸入 6 位數驗證碼" maxlength="6">
-      </div>
+        <div class="form-group" style="margin-top: 15px;">
+          <label for="code">信箱驗證碼 (6 位數字) *</label>
+          <input type="text" id="code" class="form-control" required placeholder="請輸入 6 位數驗證碼" maxlength="6">
+        </div>
 
-      <button type="button" class="btn-submit" onclick="fetchMyRegistrations()" style="margin-top: 20px;">立即查詢紀錄</button>
-      <div id="message" class="message" style="display:none; margin-top: 15px;"></div>
+        <button type="button" class="btn-submit" onclick="fetchMyRegistrations()" style="margin-top: 20px;">立即查詢紀錄</button>
+        <div id="message" class="message" style="display:none; margin-top: 15px;"></div>
+      </div>
     </div>
 
-    <!-- 查詢結果列表 -->
-    <div id="resultsContainer" style="display: none; margin-top: 30px;">
-      <h3 style="margin-bottom: 15px; border-bottom: 2px solid #eaecef; padding-bottom: 10px;">📋 您的報名紀錄清單</h3>
+    <div id="resultsContainer" style="display: none; margin-top: 20px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 2px solid #eaecef; padding-bottom: 10px;">
+        <h3 style="margin: 0;">📋 您的報名紀錄清單</h3>
+        <button type="button" onclick="resetToAuth()" class="btn-secondary" style="width: auto; padding: 6px 14px; background-color: #f6f8fa; border: 1px solid #d0d7de; cursor: pointer; border-radius: 6px; font-size: 13px;">🔒 登出 / 重新驗證</button>
+      </div>
+      <p id="userEmailDisplay" style="color: #57606a; font-size: 14px; margin-bottom: 20px;"></p>
       <div id="recordsGrid" class="event-grid"></div>
     </div>
 
@@ -61,6 +66,8 @@
     const TARGET_SHEET_ID = "18fxfF-BnNlDnhCH0NORbNeWXKSo1KHmljfPCkpvJTKo";
     let countdownTimer = null;
     let allEventsMap = {};
+    let activeEmail = "";
+    let activeCode = "";
 
     function validateSchoolEmail(email) {
       const regex = /^\d{7}@tshcmc\.edu\.vn$/i;
@@ -91,6 +98,7 @@
         if (res.status === "success") {
           msgDiv.className = "message success";
           msgDiv.textContent = res.message;
+          document.getElementById("code").value = "";
           startCountdown(120);
         } else {
           msgDiv.className = "message error";
@@ -138,8 +146,10 @@
       const email = document.getElementById("email").value.trim();
       const code = document.getElementById("code").value.trim();
       const msgDiv = document.getElementById("message");
+      const authSection = document.getElementById("authSection");
       const resultsContainer = document.getElementById("resultsContainer");
       const recordsGrid = document.getElementById("recordsGrid");
+      const userEmailDisplay = document.getElementById("userEmailDisplay");
 
       if (!validateSchoolEmail(email) || !code) {
         msgDiv.style.display = "block";
@@ -150,7 +160,7 @@
 
       msgDiv.style.display = "block";
       msgDiv.className = "message";
-      msgDiv.textContent = "正在查詢您的報名紀錄...";
+      msgDiv.textContent = "正在驗證並查詢您的報名紀錄...";
 
       await loadAllEvents();
 
@@ -158,8 +168,13 @@
         .then(res => res.json())
         .then(res => {
           if (res.status === "success") {
-            msgDiv.style.display = "none";
+        
+            activeEmail = email;
+            activeCode = code;
+
+            authSection.style.display = "none";
             resultsContainer.style.display = "block";
+            userEmailDisplay.textContent = `目前登入查詢信箱：${email}`;
             recordsGrid.innerHTML = "";
 
             const records = res.data;
@@ -240,6 +255,7 @@
       .then(res => {
         alert(res.message);
         if (res.status === "success") {
+          // 重新整理查詢結果
           fetchMyRegistrations();
         }
       })
@@ -247,6 +263,21 @@
         alert("操作失敗，請稍後再試。");
       });
     }
+
+    function resetToAuth() {
+      activeEmail = "";
+      activeCode = "";
+      document.getElementById("email").value = "";
+      document.getElementById("code").value = "";
+      document.getElementById("message").style.display = "none";
+      
+      document.getElementById("resultsContainer").style.display = "none";
+      document.getElementById("authSection").style.display = "block";
+    }
+
+    window.addEventListener("beforeunload", () => {
+      resetToAuth();
+    });
 
     let consecutiveErrors = 0;
     function checkSystemStatus(isInitialCheck = false) {
