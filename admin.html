@@ -96,7 +96,6 @@
     </a>
     <div class="nav-menu">
       <a href="index.html" class="nav-btn">首頁與通知</a>
-      <a href="resend.html" class="nav-btn">🔍 查詢我的報名</a>
       <a href="admin.html" class="nav-btn admin-link active">⚙️ 管理員後台</a>
     </div>
   </header>
@@ -373,7 +372,7 @@
         });
     }
 
-    function addQuestionBuilder(label = "", type = "text", required = true, options = [], imageUrl = "") {
+    function addQuestionBuilder(label = "", type = "text", required = true, options = [], imageUrl = "", minSelect = 0, maxSelect = 0) {
       const container = document.getElementById("questionsContainer");
       const div = document.createElement("div");
       div.className = "question-builder-card";
@@ -427,6 +426,22 @@
           </div>
         </div>
 
+        <!-- 多選題限制選取數量設定 (僅多選題顯示) -->
+        <div class="checkbox-limit-box" style="margin-top: 12px; display: ${type === 'checkbox' ? 'block' : 'none'}; background: #eef5ff; padding: 10px 12px; border-radius: 6px; border: 1px solid #b6e3ff;">
+          <label style="font-size: 13px; font-weight: 600; color: #0969da; display: block; margin-bottom: 6px;">⚙️ 多選題選取數量限制 (選填)</label>
+          <div style="display: flex; gap: 15px; align-items: center;">
+            <div>
+              <span style="font-size: 12px;">最少選：</span>
+              <input type="number" class="form-control q-min-select" value="${minSelect || 0}" min="0" style="width: 70px; display: inline-block; padding: 4px 8px;">
+            </div>
+            <div>
+              <span style="font-size: 12px;">最多選：</span>
+              <input type="number" class="form-control q-max-select" value="${maxSelect || 0}" min="0" style="width: 70px; display: inline-block; padding: 4px 8px;">
+            </div>
+            <small style="color: #57606a; font-size: 11px;">(設為 0 代表不限制。例如 3 選 2 請將最少與最多皆設為 2)</small>
+          </div>
+        </div>
+
         <div class="options-container options-box" style="display: ${['radio','checkbox','select'].includes(type) ? 'block' : 'none'};">
           <label style="margin-bottom: 8px; display: block; font-weight: 600;">選項設定</label>
           <div class="options-list">
@@ -475,7 +490,15 @@
       const card = selectEl.closest('.question-builder-card');
       const optContainer = card.querySelector('.options-container');
       const optionsList = card.querySelector('.options-list');
+      const limitBox = card.querySelector('.checkbox-limit-box');
       const val = selectEl.value;
+
+      if (val === 'checkbox') {
+        limitBox.style.display = 'block';
+      } else {
+        limitBox.style.display = 'none';
+      }
+
       if (['radio', 'checkbox', 'select'].includes(val)) {
         optContainer.style.display = 'block';
         if (optionsList.children.length === 0) {
@@ -526,6 +549,8 @@
         const type = card.querySelector(".q-type").value;
         const required = card.querySelector(".q-required").checked;
         const imageUrl = card.querySelector(".q-image-url").value;
+        const minSelect = parseInt(card.querySelector(".q-min-select")?.value || 0);
+        const maxSelect = parseInt(card.querySelector(".q-max-select")?.value || 0);
 
         const div = document.createElement("div");
         div.className = "form-group";
@@ -535,7 +560,18 @@
         div.style.borderRadius = "8px";
         div.style.border = "1px solid #d0d7de";
 
-        let labelHTML = `<label style="font-weight: 600; font-size: 15px;">${label} ${required ? '<span style="color:red;">*</span>' : ''}</label>`;
+        let limitHint = "";
+        if (type === "checkbox" && (minSelect > 0 || maxSelect > 0)) {
+          if (minSelect > 0 && maxSelect > 0) {
+            limitHint = ` <small style="color: #0969da; font-weight: normal;">(須選 ${minSelect} ~ ${maxSelect} 項)</small>`;
+          } else if (minSelect > 0) {
+            limitHint = ` <small style="color: #0969da; font-weight: normal;">(至少選 ${minSelect} 項)</small>`;
+          } else if (maxSelect > 0) {
+            limitHint = ` <small style="color: #0969da; font-weight: normal;">(最多選 ${maxSelect} 項)</small>`;
+          }
+        }
+
+        let labelHTML = `<label style="font-weight: 600; font-size: 15px;">${label} ${required ? '<span style="color:red;">*</span>' : ''}${limitHint}</label>`;
         let imgHTML = imageUrl ? `<div style="margin-top: 8px;"><img src="${imageUrl}" class="preview-img"></div>` : "";
         let inputHTML = "";
 
@@ -692,6 +728,8 @@
         const type = card.querySelector(".q-type").value;
         const required = card.querySelector(".q-required").checked;
         const imageUrl = card.querySelector(".q-image-url").value;
+        const minSelect = parseInt(card.querySelector(".q-min-select")?.value || 0);
+        const maxSelect = parseInt(card.querySelector(".q-max-select")?.value || 0);
         
         let options = [];
         if (['radio', 'checkbox', 'select'].includes(type)) {
@@ -706,7 +744,7 @@
         }
 
         if (label) {
-          questions.push({ label, type, required, options, imageUrl });
+          questions.push({ label, type, required, options, imageUrl, minSelect, maxSelect });
         }
       });
 
