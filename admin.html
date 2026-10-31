@@ -34,8 +34,11 @@
     .option-item-row {
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 10px;
       margin-bottom: 8px;
+    }
+    .option-item-row input[type="text"] {
+      flex: 1;
     }
     .btn-delete-option {
       background: transparent;
@@ -327,11 +330,16 @@
       
       let optionsHtml = '';
       if (['radio', 'checkbox', 'select'].includes(type)) {
-        if (!options || options.length === 0) options = ["選項 1"];
+        if (!options || options.length === 0) options = [{ text: "選項 1", isOther: false }];
         options.forEach(opt => {
+          // 兼容舊資料結構 (如果 options 裡直接是字串)
+          const optObj = typeof opt === 'string' ? { text: opt, isOther: false } : opt;
           optionsHtml += `
             <div class="option-item-row">
-              <input type="text" class="form-control option-input" value="${opt}" placeholder="輸入選項內容">
+              <input type="text" class="form-control option-input" value="${optObj.text}" placeholder="輸入選項內容">
+              <label style="font-size: 13px; font-weight: normal; display: flex; align-items: center; gap: 4px; white-space: nowrap; cursor: pointer;">
+                <input type="checkbox" class="option-is-other" ${optObj.isOther ? 'checked' : ''}> 設為「其他」
+              </label>
               <button type="button" class="btn-delete-option" onclick="this.parentElement.remove()" title="刪除選項">✕</button>
             </div>
           `;
@@ -394,6 +402,9 @@
       row.className = "option-item-row";
       row.innerHTML = `
         <input type="text" class="form-control option-input" value="選項 ${optCount}" placeholder="輸入選項內容">
+        <label style="font-size: 13px; font-weight: normal; display: flex; align-items: center; gap: 4px; white-space: nowrap; cursor: pointer;">
+          <input type="checkbox" class="option-is-other"> 設為「其他」
+        </label>
         <button type="button" class="btn-delete-option" onclick="this.parentElement.remove()" title="刪除選項">✕</button>
       `;
       optionsList.appendChild(row);
@@ -492,10 +503,13 @@
         
         let options = [];
         if (['radio', 'checkbox', 'select'].includes(type)) {
-          const optInputs = card.querySelectorAll(".option-input");
-          optInputs.forEach(inp => {
-            const val = inp.value.trim();
-            if (val) options.push(val);
+          const optRows = card.querySelectorAll(".option-item-row");
+          optRows.forEach(row => {
+            const text = row.querySelector(".option-input").value.trim();
+            const isOther = row.querySelector(".option-is-other").checked;
+            if (text || isOther) {
+              options.push({ text: text || "其他", isOther: isOther });
+            }
           });
         }
 
