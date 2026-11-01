@@ -206,7 +206,8 @@
         </div>
         <div class="form-group half">
           <label for="searchEmailInput">🔍 搜尋 Email 或關鍵字</label>
-          <input type="text" id="searchEmailInput" class="form-control" placeholder="輸入 Email / 學號 / 關鍵字過濾..." oninput="filterRegistrations()" disabled>
+          <!-- 移除 disabled，讓搜尋框隨時可以打字 -->
+          <input type="text" id="searchEmailInput" class="form-control" placeholder="輸入 Email / 學號 / 關鍵字過濾..." oninput="filterRegistrations()">
         </div>
       </div>
 
@@ -672,19 +673,15 @@
       const loading = document.getElementById("regLoading");
       const searchInput = document.getElementById("searchEmailInput");
 
-      searchInput.value = ""; // 清空上次搜尋
-
       if (!eventId) {
         theadRow.innerHTML = '<th>報名時間</th><th>Email</th>';
         tbody.innerHTML = '<tr><td colspan="2" class="no-data">請先選擇上方活動以檢視報名清單。</td></tr>';
-        searchInput.disabled = true;
         rawRegistrationsData = [];
         return;
       }
 
       loading.style.display = "block";
       tbody.innerHTML = "";
-      searchInput.disabled = true;
 
       fetch(`${GAS_URL}?action=getRegistrations&eventId=${encodeURIComponent(eventId)}&password=${encodeURIComponent(currentPassword)}`)
         .then(res => res.json())
@@ -692,13 +689,11 @@
           loading.style.display = "none";
           if (res.status === "success" && res.data && res.data.length > 0) {
             rawRegistrationsData = res.data; // 暫存資料
-            searchInput.disabled = false;
             renderTableData(rawRegistrationsData);
           } else {
             rawRegistrationsData = [];
             theadRow.innerHTML = '<th>報名時間</th><th>Email</th>';
             tbody.innerHTML = '<tr><td colspan="2" class="no-data">目前尚無同學報名此活動。</td></tr>';
-            searchInput.disabled = true;
           }
         })
         .catch(err => {
@@ -706,7 +701,6 @@
           loading.style.display = "none";
           rawRegistrationsData = [];
           tbody.innerHTML = '<tr><td colspan="2" class="no-data" style="color: #cf222e;">載入資料失敗，請檢查網路！</td></tr>';
-          searchInput.disabled = true;
         });
     }
 
@@ -753,7 +747,6 @@
       }
 
       const filtered = rawRegistrationsData.filter(row => {
-        // 搜尋每一個欄位的值是否包含關鍵字
         return Object.values(row).some(val => {
           return String(val).toLowerCase().includes(query);
         });
