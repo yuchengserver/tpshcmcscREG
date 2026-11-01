@@ -197,11 +197,17 @@
         <button onclick="fetchRegistrations()" class="btn-refresh">🔄 重新整理資料</button>
       </div>
 
-      <div class="form-group" style="margin-top: 15px;">
-        <label>選擇要查看的活動</label>
-        <select id="selectEvent" class="form-control" onchange="fetchRegistrations()">
-          <option value="">請先選擇活動...</option>
-        </select>
+      <div class="form-row" style="margin-top: 15px;">
+        <div class="form-group half">
+          <label>選擇要查看的活動</label>
+          <select id="selectEvent" class="form-control" onchange="fetchRegistrations()">
+            <option value="">請先選擇活動...</option>
+          </select>
+        </div>
+        <div class="form-group half">
+          <label for="searchEmailInput">🔍 搜尋 Email 或關鍵字</label>
+          <input type="text" id="searchEmailInput" class="form-control" placeholder="輸入 Email / 學號 / 關鍵字過濾..." oninput="filterRegistrations()" disabled>
+        </div>
       </div>
 
       <div id="regLoading" class="message" style="display: none;">載入報名資料中...</div>
@@ -305,6 +311,7 @@
     const GAS_URL = "https://script.google.com/macros/s/AKfycbzw8vASm3Nm7eIpcQYQ_QBMK4m3j0d9Thcw8N8nWBsuUPJDCsioB_KLErcH1nIP2v0/exec";
     const TARGET_SHEET_ID = "18fxfF-BnNlDnhCH0NORbNeWXKSo1KHmljfPCkpvJTKo"; // 🔒 指定專用上鎖試算表 ID
     let currentPassword = "";
+    let rawRegistrationsData = []; // 儲存該活動所有原始資料
 
     function switchTab(tabName) {
       const createSec = document.getElementById("createSection");
@@ -663,51 +670,96 @@
       const theadRow = document.getElementById("tableHeaderRow");
       const tbody = document.querySelector("#dataTable tbody");
       const loading = document.getElementById("regLoading");
+      const searchInput = document.getElementById("searchEmailInput");
+
+      searchInput.value = ""; // 清空上次搜尋
 
       if (!eventId) {
         theadRow.innerHTML = '<th>報名時間</th><th>Email</th>';
         tbody.innerHTML = '<tr><td colspan="2" class="no-data">請先選擇上方活動以檢視報名清單。</td></tr>';
+        searchInput.disabled = true;
+        rawRegistrationsData = [];
         return;
       }
 
       loading.style.display = "block";
       tbody.innerHTML = "";
+      searchInput.disabled = true;
 
       fetch(`${GAS_URL}?action=getRegistrations&eventId=${encodeURIComponent(eventId)}&password=${encodeURIComponent(currentPassword)}`)
         .then(res => res.json())
         .then(res => {
           loading.style.display = "none";
           if (res.status === "success" && res.data && res.data.length > 0) {
-            const firstRow = res.data[0];
-            const keys = Object.keys(firstRow);
-
-            let thHTML = '';
-            keys.forEach(k => {
-              thHTML += `<th>${k}</th>`;
-            });
-            theadRow.innerHTML = thHTML;
-
-            res.data.forEach(row => {
-              const tr = document.createElement("tr");
-              let tdHTML = '';
-              keys.forEach(k => {
-                let val = row[k] || '';
-                if (k === "報名時間" && val) val = new Date(val).toLocaleString();
-                tdHTML += `<td>${val}</td>`;
-              });
-              tr.innerHTML = tdHTML;
-              tbody.appendChild(tr);
-            });
+            rawRegistrationsData = res.data; // 暫存資料
+            searchInput.disabled = false;
+            renderTableData(rawRegistrationsData);
           } else {
+            rawRegistrationsData = [];
             theadRow.innerHTML = '<th>報名時間</th><th>Email</th>';
             tbody.innerHTML = '<tr><td colspan="2" class="no-data">目前尚無同學報名此活動。</td></tr>';
+            searchInput.disabled = true;
           }
         })
         .catch(err => {
           console.error(err);
           loading.style.display = "none";
+          rawRegistrationsData = [];
           tbody.innerHTML = '<tr><td colspan="2" class="no-data" style="color: #cf222e;">載入資料失敗，請檢查網路！</td></tr>';
+          searchInput.disabled = true;
         });
+    }
+
+    // 渲染表格資料
+    function renderTableData(dataList) {
+      const theadRow = document.getElementById("tableHeaderRow");
+      const tbody = document.querySelector("#dataTable tbody");
+      tbody.innerHTML = "";
+
+      if (!dataList || dataList.length === 0) {
+        const colCount = theadRow.children.length || 2;
+        tbody.innerHTML = `<tr><td colspan="${colCount}" class="no-data">查無符合搜尋條件的報名資料。</td></tr>`;
+        return;
+      }
+
+      const firstRow = dataList[0];
+      const keys = Object.keys(firstRow);
+
+      let thHTML = '';
+      keys.forEach(k => {
+        thHTML += `<th>${k}</th>`;
+      });
+      theadRow.innerHTML = thHTML;
+
+      dataList.forEach(row => {
+        const tr = document.createElement("tr");
+        let tdHTML = '';
+        keys.forEach(k => {
+          let val = row[k] || '';
+          if (k === "報名時間" && val) val = new Date(val).toLocaleString();
+          tdHTML += `<td>${val}</td>`;
+        });
+        tr.innerHTML = tdHTML;
+        tbody.appendChild(tr);
+      });
+    }
+
+    // 前端即時過濾（搜尋 Email / 全欄位關鍵字）
+    function filterRegistrations() {
+      const query = document.getElementById("searchEmailInput").value.trim().toLowerCase();
+      if (!query) {
+        renderTableData(rawRegistrationsData);
+        return;
+      }
+
+      const filtered = rawRegistrationsData.filter(row => {
+        // 搜尋每一個欄位的值是否包含關鍵字
+        return Object.values(row).some(val => {
+          return String(val).toLowerCase().includes(query);
+        });
+      });
+
+      renderTableData(filtered);
     }
 
     function submitCreateEvent() {
