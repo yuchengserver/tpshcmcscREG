@@ -563,3 +563,92 @@ th {
   text-align: center;
   grid-column: 1 / -1;
 }
+/* ==========================================================
+   7. 手機專屬排版 (RWD 響應式設計 - 螢幕寬度 768px 以下)
+========================================================== */
+@media screen and (max-width: 768px) {
+  /* 容器調整為左右留邊，避免貼齊螢幕邊緣 */
+  .container {
+    width: 92% !important;
+    margin: 20px auto !important;
+    padding: 20px !important;
+  }
+
+  .container.wide {
+    width: 95% !important;
+    padding: 15px !important;
+  }
+
+  /* 頂部導覽列改為上下堆疊或縮小左右 padding */
+  .navbar {
+    padding: 10px 16px !important;
+    flex-direction: column !important;
+    gap: 10px;
+  }
+
+  .nav-menu {
+    width: 100%;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  /* 表單欄位在手機上全部改為單欄垂直排列 */
+  .form-row {
+    flex-direction: column !important;
+    gap: 0 !important;
+  }
+
+  .form-group.half {
+    width: 100% !important;
+  }
+
+  /* 後台頂部控制列（標題與登出按鈕）垂直排列 */
+  .admin-top-bar {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 12px;
+    padding: 16px !important;
+  }
+
+  .admin-top-bar button {
+    width: 100% !important;
+  }
+
+  /* 後台報名查詢區的下拉選單與搜尋框改為上下滿版 */
+  #listSection .form-row {
+    flex-direction: column !important;
+    gap: 12px !important;
+  }
+
+  #listSection .form-group.half {
+    width: 100% !important;
+  }
+
+  /* 重新整理按鈕與其他操作按鈕在手機上撐滿寬度，方便手指點擊 */
+  .admin-header-flex {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .btn-refresh {
+    width: 100% !important;
+    text-align: center;
+  }
+
+  /* 表格文字在手機上稍微縮小，確保顯示正常 */
+  th, td {
+    padding: 8px 6px !important;
+    font-size: 12px !important;
+  }
+
+  /* 登入卡片在手機上貼齊左右 */
+  .login-card-wrapper {
+    margin-top: 20px !important;
+    padding: 0 15px !important;
+  }
+
+  .login-card {
+    padding: 25px 20px !important;
+  }
+}
