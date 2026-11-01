@@ -80,6 +80,7 @@
       const loading = document.getElementById("loading");
       const eventsContainer = document.getElementById("eventsContainer");
 
+      // 只有在手動點擊重新整理且非靜默時，才允許讀取暫存
       if (!forceRefresh && !isSilent) {
         const cachedRes = sessionStorage.getItem("TSSC_EVENTS_CACHE");
         if (cachedRes) {
@@ -100,7 +101,8 @@
         eventsContainer.style.display = "none";
       }
 
-      fetch(`${GAS_URL}?action=getEvents`)
+      // 加上時間戳記 _t 確保每次背景抓取都是最新資料，不被瀏覽器或伺服器快取影響
+      fetch(`${GAS_URL}?action=getEvents&_t=${Date.now()}`)
         .then(res => res.json())
         .then(res => {
           sessionStorage.setItem("TSSC_EVENTS_CACHE", JSON.stringify(res));
