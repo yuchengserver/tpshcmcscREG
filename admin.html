@@ -5,87 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>TSSC13TH - 管理員後台</title>
   <link rel="stylesheet" href="style.css">
-  <style>
-    .question-builder-card {
-      background: #f6f8fa;
-      border: 1px solid #d0d7de;
-      padding: 16px;
-      border-radius: 8px;
-      margin-bottom: 15px;
-      position: relative;
-    }
-    .question-builder-card .btn-delete-q {
-      position: absolute;
-      top: 10px;
-      right: 10px;
-      background: #ffeef0;
-      color: #cf222e;
-      border: 1px solid #ffc1c0;
-      padding: 4px 8px;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 12px;
-    }
-    .options-box {
-      margin-top: 12px;
-      padding-left: 15px;
-      border-left: 3px solid #0969da;
-    }
-    .option-item-row {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      margin-bottom: 8px;
-    }
-    .option-item-row input[type="text"] {
-      flex: 1;
-    }
-    .btn-delete-option {
-      background: transparent;
-      border: none;
-      color: #57606a;
-      cursor: pointer;
-      font-size: 16px;
-      padding: 4px 8px;
-      border-radius: 4px;
-    }
-    .btn-delete-option:hover {
-      background: #ffeef0;
-      color: #cf222e;
-    }
-    /* 預覽 Modal 樣式 */
-    .modal-overlay {
-      display: none;
-      position: fixed;
-      top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(0,0,0,0.5);
-      z-index: 1000;
-      justify-content: center;
-      align-items: center;
-    }
-    .modal-content {
-      background: #ffffff;
-      width: 90%; max-width: 700px; max-height: 90vh;
-      overflow-y: auto;
-      padding: 30px;
-      border-radius: 12px;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.15);
-      position: relative;
-    }
-    .modal-close {
-      position: absolute;
-      top: 15px; right: 20px;
-      background: transparent; border: none;
-      font-size: 20px; cursor: pointer; color: #57606a;
-    }
-    .preview-img {
-      max-width: 100%;
-      max-height: 200px;
-      border-radius: 6px;
-      margin-top: 8px;
-      border: 1px solid #d0d7de;
-    }
-  </style>
+  <link rel="stylesheet" href="admin.css">
+  
+  <!-- 引入 Google Identity Services SDK -->
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body>
   
@@ -103,14 +26,23 @@
   
   <div id="loginSection" class="login-card-wrapper" style="margin-top: 60px;">
     <div class="login-card">
-      <div class="login-icon">🔐</div>
-      <h2>後台管理系統</h2>
+      <h2>活動報名後台系統</h2>
       <p class="login-subtitle">胡志明市臺灣學校學生會 - 發布新活動與報名管理</p>
       
       <div class="login-form">
-        <label class="login-label">🔒 管理員身份驗證</label>
-        <input type="password" id="adminPwd" class="login-input" placeholder="請輸入管理員密碼" onkeydown="if(event.key === 'Enter') loginAdmin()">
-        <button id="loginBtn" onclick="loginAdmin()" class="btn-login">登入後台</button>
+        <label class="login-label">🔒 管理員身份驗證 (限指定帳號)</label>
+        
+        <!-- 使用 Google OAuth 自訂義按鈕登入 -->
+        <div id="loginPromptBox" style="margin-top: 10px;">
+          <button type="button" id="customGoogleBtn" class="btn-google-custom">
+            <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.63-.06-1.25-.16-1.84H9v3.49h4.84c-.21 1.12-.86 2.07-1.83 2.71v2.26h2.97c1.74-1.6 2.66-3.95 2.66-6.62z"/><path fill="#34A853" d="M9 18c2.43 0 4.47-.8 5.96-2.18l-2.97-2.26c-.81.54-1.84.86-2.99.86-2.31 0-4.27-1.56-4.97-3.66H1.02v2.33C2.53 15.93 5.51 18 9 18z"/><path fill="#FBBC05" d="M4.03 10.76c-.18-.54-.28-1.13-.28-1.76s.1-1.22.28-1.76V4.91H1.02C.37 6.22 0 7.7 0 9.29s.37 3.07 1.02 4.38l3.01-2.33z"/><path fill="#EA4335" d="M9 3.58c1.32 0 2.51.45 3.44 1.35l2.58-2.58C13.46.89 11.43 0 9 0 5.51 0 2.53 2.07 1.02 4.91l3.01 2.33c.7-2.1 2.66-3.66 4.97-3.66z"/></svg>
+            使用管理員 Google 帳號登入
+          </button>
+          <small class="hint-text" style="display: block; margin-top: 8px; text-align: center;">僅限指定管理員信箱登入</small>
+        </div>
+
+        <!-- 隱藏欄位儲存 Token -->
+        <input type="hidden" id="adminCredential">
       </div>
 
       <div id="loginMsg" class="message error" style="display:none; margin-top:15px;"></div>
@@ -243,76 +175,78 @@
     </div>
   </div>
 
-  <style>
-    .admin-top-bar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      background: #ffffff;
-      padding: 20px 24px;
-      border-radius: 10px;
-      border: 1px solid #e1e4e8;
-      margin-bottom: 20px;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.02);
-    }
-    .admin-tabs {
-      display: flex;
-      gap: 10px;
-      margin-bottom: 20px;
-    }
-    .admin-tab-btn {
-      flex: 1;
-      padding: 12px;
-      background-color: #f6f8fa;
-      color: #57606a;
-      border: 1px solid #d0d7de;
-      border-radius: 8px;
-      font-size: 15px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-    .admin-tab-btn:hover {
-      background-color: #eaecef;
-      color: #1f2328;
-    }
-    .admin-tab-btn.active {
-      background-color: #121826;
-      color: #ffffff;
-      border-color: #121826;
-    }
-    .section-badge-header, .admin-header-flex {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 18px;
-      padding-bottom: 10px;
-      border-bottom: 2px solid #eaecef;
-    }
-    .section-tag {
-      font-size: 16px;
-      font-weight: 700;
-      padding: 6px 12px;
-      border-radius: 6px;
-      display: inline-block;
-    }
-    .create-tag {
-      background-color: #ddf4ff;
-      color: #0969da;
-      border-left: 4px solid #0969da;
-    }
-    .list-tag {
-      background-color: #dafbe1;
-      color: #1a7f37;
-      border-left: 4px solid #2da44e;
-    }
-  </style>
+
 
   <script>
     const GAS_URL = "https://script.google.com/macros/s/AKfycbzw8vASm3Nm7eIpcQYQ_QBMK4m3j0d9Thcw8N8nWBsuUPJDCsioB_KLErcH1nIP2v0/exec";
     const TARGET_SHEET_ID = "18fxfF-BnNlDnhCH0NORbNeWXKSo1KHmljfPCkpvJTKo"; // 🔒 指定專用上鎖試算表 ID
-    let currentPassword = "";
+    const GOOGLE_CLIENT_ID = "434067788519-ivv0ms7qobv7s5s7an8go152v8adc64l.apps.googleusercontent.com";
+    
+    // 授權的管理員清單
+    const ALLOWED_ADMINS = [
+      "yucheng.server@gmail.com",
+      "1141303@tshcmc.edu.vn",
+      "tssc13th@gmail.com"
+    ];
+
+    let currentCredential = "";
     let rawRegistrationsData = []; // 儲存該活動所有原始資料
+    let googleTokenClient = null;
+
+    window.onload = function() {
+      if (typeof google !== 'undefined') {
+        googleTokenClient = google.accounts.oauth2.initTokenClient({
+          client_id: GOOGLE_CLIENT_ID,
+          scope: 'email profile openid',
+          callback: (response) => {
+            if (response.access_token) {
+              loginAdminWithGoogle(response.access_token);
+            }
+          },
+        });
+
+        document.getElementById("customGoogleBtn").addEventListener("click", () => {
+          googleTokenClient.requestAccessToken();
+        });
+      }
+    };
+
+    function loginAdminWithGoogle(accessToken) {
+      const loginMsg = document.getElementById("loginMsg");
+      loginMsg.style.display = "none";
+
+      // 取得 Google 用戶資料
+      fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+        headers: { 'Authorization': `Bearer ${accessToken}` }
+      })
+      .then(res => res.json())
+      .then(userInfo => {
+        const email = userInfo.email ? userInfo.email.toLowerCase() : "";
+
+        // 前端驗證是否在授權清單中
+        if (!ALLOWED_ADMINS.includes(email)) {
+          loginMsg.textContent = `❌ 權限不足：帳號 ${email} 無權存取管理員後台！`;
+          loginMsg.style.display = "block";
+          return;
+        }
+
+        currentCredential = accessToken;
+        document.getElementById("loginSection").style.display = "none";
+        document.getElementById("adminContent").style.display = "block";
+        switchTab('create');
+        
+        if (document.getElementById("questionsContainer").children.length === 0) {
+          addQuestionBuilder("姓名", "text", true);
+          addQuestionBuilder("班級", "text", true);
+          addQuestionBuilder("座號", "text", true);
+        }
+      })
+      .catch(err => {
+        console.error(err);
+        loginMsg.textContent = "Google 登入驗證失敗，請重試！";
+        loginMsg.style.display = "block";
+      });
+    }
 
     function switchTab(tabName) {
       const createSec = document.getElementById("createSection");
@@ -332,52 +266,6 @@
         tabListBtn.className = "admin-tab-btn active";
         loadAdminEvents();
       }
-    }
-
-    function loginAdmin() {
-      const pwd = document.getElementById("adminPwd").value.trim();
-      const loginMsg = document.getElementById("loginMsg");
-      const loginBtn = document.getElementById("loginBtn");
-      
-      if (!pwd) {
-        loginMsg.textContent = "請輸入密碼！";
-        loginMsg.style.display = "block";
-        return;
-      }
-
-      loginMsg.style.display = "none";
-      currentPassword = pwd;
-
-      loginBtn.disabled = true;
-      loginBtn.textContent = "驗證中...";
-
-      fetch(`${GAS_URL}?action=adminLogin&password=${encodeURIComponent(pwd)}`)
-        .then(res => res.json())
-        .then(res => {
-          if (res.status === "success") {
-            document.getElementById("loginSection").style.display = "none";
-            document.getElementById("adminContent").style.display = "block";
-            switchTab('create');
-            
-            if (document.getElementById("questionsContainer").children.length === 0) {
-              addQuestionBuilder("姓名", "text", true);
-              addQuestionBuilder("班級", "text", true);
-              addQuestionBuilder("座號", "text", true);
-            }
-          } else {
-            loginMsg.textContent = "密碼錯誤，請重新輸入！";
-            loginMsg.style.display = "block";
-          }
-        })
-        .catch(err => {
-          console.error(err);
-          loginMsg.textContent = "連線失敗，請檢查網路！";
-          loginMsg.style.display = "block";
-        })
-        .finally(() => {
-          loginBtn.disabled = false;
-          loginBtn.textContent = "登入後台";
-        });
     }
 
     function addQuestionBuilder(label = "", type = "text", required = true, options = [], imageUrl = "", minSelect = 0, maxSelect = 0) {
@@ -683,7 +571,7 @@
       loading.style.display = "block";
       tbody.innerHTML = "";
 
-      fetch(`${GAS_URL}?action=getRegistrations&eventId=${encodeURIComponent(eventId)}&password=${encodeURIComponent(currentPassword)}`)
+      fetch(`${GAS_URL}?action=getRegistrations&eventId=${encodeURIComponent(eventId)}&credential=${encodeURIComponent(currentCredential)}`)
         .then(res => res.json())
         .then(res => {
           loading.style.display = "none";
@@ -808,7 +696,7 @@
 
       const payload = {
         action: "createEvent",
-        password: currentPassword,
+        credential: currentCredential, // 傳送 Access Token 供後端驗證權限
         eventId: eventId,
         eventName: eventName,
         eventDesc: document.getElementById("newEventDesc").value.trim(),
@@ -847,8 +735,7 @@
     }
 
     function logout() {
-      currentPassword = "";
-      document.getElementById("adminPwd").value = "";
+      currentCredential = "";
       document.getElementById("loginSection").style.display = "flex";
       document.getElementById("adminContent").style.display = "none";
       document.getElementById("loginMsg").style.display = "none";

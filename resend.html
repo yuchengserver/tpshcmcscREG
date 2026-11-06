@@ -5,6 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>TSSC13TH - 查詢我的報名紀錄</title>
   <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="resend.css">
+  <!-- 引入 Google Identity Services SDK -->
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body>
   <header class="navbar">
@@ -25,24 +28,36 @@
     <div id="authSection">
       <div class="rule-card">
         <h3>🔍 查詢與管理我的報名紀錄</h3>
-        <p style="margin-top: 8px; color: #57606a;">請輸入您的學校信箱並取得驗證碼，即可查看您所有報名過的活動。若活動仍在開放報名時間內，您可以選擇直接取消報名或重新報名。</p>
+        <p style="margin-top: 8px; color: #57606a;">請使用學校官方信箱（<code>@tshcmc.edu.vn</code>）進行 Google 登入驗證，即可查看您所有報名過的活動。若活動仍在開放報名時間內，您可以選擇直接取消報名或重新報名。</p>
       </div>
 
       <div class="login-card" style="max-width: 600px; margin: 30px auto; padding: 25px;">
         <div class="form-group">
-          <label for="email">學校官方電子信箱 (@tshcmc.edu.vn) *</label>
-          <div class="input-with-btn">
-            <input type="email" id="email" class="form-control" required placeholder="1234567@tshcmc.edu.vn">
-            <button type="button" id="sendCodeBtn" class="btn-verify" onclick="sendVerificationCode()">發送驗證碼</button>
+          <label>學校官方電子信箱驗證 (Google OAuth 2.0) *</label>
+          
+          <!-- 未登入時顯示自訂義 Google 登入按鈕 -->
+          <div id="loginPromptBox" style="margin-top: 15px;">
+            <button type="button" id="customGoogleBtn" class="btn-google-custom">
+              <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.63-.06-1.25-.16-1.84H9v3.49h4.84c-.21 1.12-.86 2.07-1.83 2.71v2.26h2.97c1.74-1.6 2.66-3.95 2.66-6.62z"/><path fill="#34A853" d="M9 18c2.43 0 4.47-.8 5.96-2.18l-2.97-2.26c-.81.54-1.84.86-2.99.86-2.31 0-4.27-1.56-4.97-3.66H1.02v2.33C2.53 15.93 5.51 18 9 18z"/><path fill="#FBBC05" d="M4.03 10.76c-.18-.54-.28-1.13-.28-1.76s.1-1.22.28-1.76V4.91H1.02C.37 6.22 0 7.7 0 9.29s.37 3.07 1.02 4.38l3.01-2.33z"/><path fill="#EA4335" d="M9 3.58c1.32 0 2.51.45 3.44 1.35l2.58-2.58C13.46.89 11.43 0 9 0 5.51 0 2.53 2.07 1.02 4.91l3.01 2.33c.7-2.1 2.66-3.66 4.97-3.66z"/></svg>
+              使用學校 Google 信箱登入查詢
+            </button>
+            <small class="hint-text">點擊後將彈出 Google 視窗，請選擇您的學校信箱（@tshcmc.edu.vn）完成身份驗證。</small>
           </div>
+
+          <!-- 登入成功後顯示的身份資訊 -->
+          <div id="userInfoBox" style="display: none; margin-top: 15px;">
+            <div class="user-info-badge">
+              <span id="loggedInEmailText">已驗證信箱：loading...</span>
+              <button type="button" onclick="logoutGoogle()" class="btn-secondary" style="padding: 4px 10px; font-size: 12px; background: #ffffff; color: #cf222e; border-color: #ffc1c0;">切換帳號</button>
+            </div>
+          </div>
+          
+          <!-- 隱藏欄位儲存 Token 與 Email -->
+          <input type="hidden" id="googleCredential">
+          <input type="hidden" id="verifiedEmail">
         </div>
 
-        <div class="form-group" style="margin-top: 15px;">
-          <label for="code">信箱驗證碼 (6 位數字) *</label>
-          <input type="text" id="code" class="form-control" required placeholder="請輸入 6 位數驗證碼" maxlength="6">
-        </div>
-
-        <button type="button" class="btn-submit" onclick="fetchMyRegistrations()" style="margin-top: 20px;">立即查詢紀錄</button>
+        <button type="button" id="queryBtn" class="btn-submit" onclick="fetchMyRegistrations()" style="margin-top: 20px;" disabled>請先完成 Google 登入驗證</button>
         <div id="message" class="message" style="display:none; margin-top: 15px;"></div>
       </div>
     </div>
@@ -64,70 +79,85 @@
   <script>
     const GAS_URL = "https://script.google.com/macros/s/AKfycbzw8vASm3Nm7eIpcQYQ_QBMK4m3j0d9Thcw8N8nWBsuUPJDCsioB_KLErcH1nIP2v0/exec";
     const TARGET_SHEET_ID = "18fxfF-BnNlDnhCH0NORbNeWXKSo1KHmljfPCkpvJTKo";
-    let countdownTimer = null;
+    const GOOGLE_CLIENT_ID = "434067788519-ivv0ms7qobv7s5s7an8go152v8adc64l.apps.googleusercontent.com";
+
     let allEventsMap = {};
     let activeEmail = "";
-    let activeCode = "";
+    let activeCredential = "";
+    let googleTokenClient = null;
 
     function validateSchoolEmail(email) {
       const regex = /^\d{7}@tshcmc\.edu\.vn$/i;
       return regex.test(email);
     }
 
-    function sendVerificationCode() {
-      const email = document.getElementById("email").value.trim();
-      const sendBtn = document.getElementById("sendCodeBtn");
-      const msgDiv = document.getElementById("message");
+    window.onload = function() {
+      // 初始化 Google Identity Services (GIS) Token Client
+      if (typeof google !== 'undefined') {
+        googleTokenClient = google.accounts.oauth2.initTokenClient({
+          client_id: GOOGLE_CLIENT_ID,
+          scope: 'email profile openid',
+          callback: (response) => {
+            if (response.access_token) {
+              fetchGoogleUserInfo(response.access_token);
+            }
+          },
+        });
 
-      if (!validateSchoolEmail(email)) {
-        alert("請輸入正確的學校信箱格式：7位學號@tshcmc.edu.vn！");
-        return;
+        document.getElementById("customGoogleBtn").addEventListener("click", () => {
+          googleTokenClient.requestAccessToken();
+        });
       }
 
-      sendBtn.disabled = true;
-      sendBtn.textContent = "發送中...";
+      loadAllEvents();
+    };
 
-      fetch(GAS_URL, {
-        method: "POST",
-        headers: { "Content-Type": "text/plain;charset=utf-8" },
-        body: JSON.stringify({ action: "sendCode", email: email })
+    function fetchGoogleUserInfo(accessToken) {
+      fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+        headers: { 'Authorization': `Bearer ${accessToken}` }
       })
       .then(res => res.json())
-      .then(res => {
-        msgDiv.style.display = "block";
-        if (res.status === "success") {
-          msgDiv.className = "message success";
-          msgDiv.textContent = res.message;
-          document.getElementById("code").value = "";
-          startCountdown(120);
-        } else {
-          msgDiv.className = "message error";
-          msgDiv.textContent = res.message;
-          sendBtn.disabled = false;
-          sendBtn.textContent = "發送驗證碼";
+      .then(userInfo => {
+        const email = userInfo.email;
+
+        if (!validateSchoolEmail(email)) {
+          alert("❌ 驗證失敗：必須使用學校官方信箱（7位學號@tshcmc.edu.vn）登入！");
+          return;
         }
+
+        document.getElementById("googleCredential").value = accessToken;
+        document.getElementById("verifiedEmail").value = email;
+        
+        document.getElementById("loggedInEmailText").textContent = `已驗證：${email}`;
+        document.getElementById("loginPromptBox").style.display = "none";
+        document.getElementById("userInfoBox").style.display = "block";
+        
+        const queryBtn = document.getElementById("queryBtn");
+        queryBtn.disabled = false;
+        queryBtn.textContent = "立即查詢紀錄";
+
+        const msgDiv = document.getElementById("message");
+        msgDiv.style.display = "block";
+        msgDiv.className = "message success";
+        msgDiv.textContent = "✅ Google 學校信箱驗證成功！請點擊下方按鈕查詢。";
       })
       .catch(err => {
-        alert("發送失敗，請稍後再試！");
-        sendBtn.disabled = false;
-        sendBtn.textContent = "發送驗證碼";
+        console.error("取得 Google 用戶資料失敗", err);
+        alert("Google 登入驗證發生錯誤，請重試！");
       });
     }
 
-    function startCountdown(seconds) {
-      const sendBtn = document.getElementById("sendCodeBtn");
-      let remain = seconds;
-      clearInterval(countdownTimer);
-      countdownTimer = setInterval(() => {
-        if (remain <= 0) {
-          clearInterval(countdownTimer);
-          sendBtn.disabled = false;
-          sendBtn.textContent = "發送驗證碼";
-        } else {
-          sendBtn.textContent = `${remain} 秒後重新發送`;
-          remain--;
-        }
-      }, 1000);
+    function logoutGoogle() {
+      document.getElementById("googleCredential").value = "";
+      document.getElementById("verifiedEmail").value = "";
+      document.getElementById("loginPromptBox").style.display = "block";
+      document.getElementById("userInfoBox").style.display = "none";
+      
+      const queryBtn = document.getElementById("queryBtn");
+      queryBtn.disabled = true;
+      queryBtn.textContent = "請先完成 Google 登入驗證";
+      
+      document.getElementById("message").style.display = "none";
     }
 
     function loadAllEvents() {
@@ -143,18 +173,18 @@
     }
 
     async function fetchMyRegistrations() {
-      const email = document.getElementById("email").value.trim();
-      const code = document.getElementById("code").value.trim();
+      const email = document.getElementById("verifiedEmail").value.trim();
+      const credential = document.getElementById("googleCredential").value.trim();
       const msgDiv = document.getElementById("message");
       const authSection = document.getElementById("authSection");
       const resultsContainer = document.getElementById("resultsContainer");
       const recordsGrid = document.getElementById("recordsGrid");
       const userEmailDisplay = document.getElementById("userEmailDisplay");
 
-      if (!validateSchoolEmail(email) || !code) {
+      if (!validateSchoolEmail(email) || !credential) {
         msgDiv.style.display = "block";
         msgDiv.className = "message error";
-        msgDiv.textContent = "請完整輸入學校信箱與 6 位數驗證碼！";
+        msgDiv.textContent = "請先完成 Google 學校信箱登入驗證！";
         return;
       }
 
@@ -164,13 +194,12 @@
 
       await loadAllEvents();
 
-      fetch(`${GAS_URL}?action=getMyRegistrations&email=${encodeURIComponent(email)}&code=${encodeURIComponent(code)}`)
+      fetch(`${GAS_URL}?action=getMyRegistrations&email=${encodeURIComponent(email)}&credential=${encodeURIComponent(credential)}`)
         .then(res => res.json())
         .then(res => {
           if (res.status === "success") {
-        
             activeEmail = email;
-            activeCode = code;
+            activeCredential = credential;
 
             authSection.style.display = "none";
             resultsContainer.style.display = "block";
@@ -206,7 +235,7 @@
                 actionHTML = `
                   <div style="display: flex; gap: 10px; margin-top: 15px;">
                     <a href="signup.html?eventId=${encodeURIComponent(eventId)}" class="btn-card-action btn-card-active" style="flex:1; text-align:center;">🔄 重新報名 / 修改</a>
-                    <button onclick="cancelReg('${email}', '${eventId}', '${code}')" class="btn-card-action" style="flex:1; background-color: #ffeef0; color: #cf222e; border: 1px solid #ffc1c0; cursor:pointer; border-radius:6px; font-weight:600;">❌ 取消報名</button>
+                    <button onclick="cancelReg('${email}', '${eventId}', '${credential}')" class="btn-card-action" style="flex:1; background-color: #ffeef0; color: #cf222e; border: 1px solid #ffc1c0; cursor:pointer; border-radius:6px; font-weight:600;">❌ 取消報名</button>
                   </div>
                 `;
               } else {
@@ -243,19 +272,18 @@
         });
     }
 
-    function cancelReg(email, eventId, code) {
+    function cancelReg(email, eventId, credential) {
       if (!confirm("確定要取消此活動的報名嗎？")) return;
 
       fetch(GAS_URL, {
         method: "POST",
         headers: { "Content-Type": "text/plain;charset=utf-8" },
-        body: JSON.stringify({ action: "cancelRegistration", email, eventId, code })
+        body: JSON.stringify({ action: "cancelRegistration", email, eventId, credential })
       })
       .then(res => res.json())
       .then(res => {
         alert(res.message);
         if (res.status === "success") {
-          // 重新整理查詢結果
           fetchMyRegistrations();
         }
       })
@@ -266,10 +294,8 @@
 
     function resetToAuth() {
       activeEmail = "";
-      activeCode = "";
-      document.getElementById("email").value = "";
-      document.getElementById("code").value = "";
-      document.getElementById("message").style.display = "none";
+      activeCredential = "";
+      logoutGoogle();
       
       document.getElementById("resultsContainer").style.display = "none";
       document.getElementById("authSection").style.display = "block";

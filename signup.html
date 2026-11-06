@@ -5,15 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>TSSC13TH - 活動報名專區</title>
   <link rel="stylesheet" href="style.css">
-  <style>
-    .question-img {
-      max-width: 100%;
-      max-height: 250px;
-      border-radius: 6px;
-      margin-top: 8px;
-      border: 1px solid #d0d7de;
-    }
-  </style>
+  <link rel="stylesheet" href="signup.css">
+
+  
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body>
   <!-- 頂部導覽列 -->
@@ -50,21 +45,33 @@
         <p style="color: #57606a;">正在載入報名表單題目...</p>
       </div>
 
+      <!-- Google OAuth 2.0 登入驗證區塊 -->
       <div class="form-group" style="margin-top: 25px;">
-        <label for="email">學校官方電子信箱 (@tshcmc.edu.vn) *</label>
-        <div class="input-with-btn">
-          <input type="email" id="email" class="form-control" required placeholder="1234567@tshcmc.edu.vn" pattern="^\d{7}@tshcmc\.edu\.vn$">
-          <button type="button" id="sendCodeBtn" class="btn-verify" onclick="sendVerificationCode()">發送驗證碼</button>
+        <label>學校官方電子信箱驗證 (Google OAuth 2.0) *</label>
+        
+        <!-- 未登入時顯示自訂義 Google 登入按鈕 -->
+        <div id="loginPromptBox">
+          <button type="button" id="customGoogleBtn" class="btn-google-custom">
+            <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.63-.06-1.25-.16-1.84H9v3.49h4.84c-.21 1.12-.86 2.07-1.83 2.71v2.26h2.97c1.74-1.6 2.66-3.95 2.66-6.62z"/><path fill="#34A853" d="M9 18c2.43 0 4.47-.8 5.96-2.18l-2.97-2.26c-.81.54-1.84.86-2.99.86-2.31 0-4.27-1.56-4.97-3.66H1.02v2.33C2.53 15.93 5.51 18 9 18z"/><path fill="#FBBC05" d="M4.03 10.76c-.18-.54-.28-1.13-.28-1.76s.1-1.22.28-1.76V4.91H1.02C.37 6.22 0 7.7 0 9.29s.37 3.07 1.02 4.38l3.01-2.33z"/><path fill="#EA4335" d="M9 3.58c1.32 0 2.51.45 3.44 1.35l2.58-2.58C13.46.89 11.43 0 9 0 5.51 0 2.53 2.07 1.02 4.91l3.01 2.33c.7-2.1 2.66-3.66 4.97-3.66z"/></svg>
+            使用學校 Google 信箱登入驗證
+          </button>
+          <small class="hint-text">點擊後將彈出 Google 視窗，請選擇您的學校信箱（@tshcmc.edu.vn）完成身份驗證。</small>
         </div>
+
+        <!-- 登入成功後顯示的身份資訊 -->
+        <div id="userInfoBox" style="display: none;">
+          <div class="user-info-badge">
+            <span id="loggedInEmailText">已驗證信箱：loading...</span>
+            <button type="button" onclick="logoutGoogle()" class="btn-secondary" style="padding: 4px 10px; font-size: 12px; background: #ffffff; color: #cf222e; border-color: #ffc1c0;">切換帳號</button>
+          </div>
+        </div>
+        
+        <!-- 隱藏欄位儲存 Token 與 Email 供後端驗證 -->
+        <input type="hidden" id="googleCredential" required>
+        <input type="hidden" id="verifiedEmail">
       </div>
 
-      <div class="form-group">
-        <label for="code">信箱驗證碼 (6 位數字) *</label>
-        <input type="text" id="code" class="form-control" required placeholder="請輸入 6 位數驗證碼" maxlength="6">
-        <small class="hint-text">請輸入寄送至您學校信箱中的 6 位數一次性驗證碼（有效期限 5 分鐘，每人每天最多發送 5 次）。</small>
-      </div>
-
-      <button type="submit" id="submitBtn" class="btn-submit" style="margin-top: 20px;">確認並送出報名</button>
+      <button type="submit" id="submitBtn" class="btn-submit" style="margin-top: 20px;" disabled>請先完成 Google 登入驗證</button>
     </form>
 
     <div id="message" class="message" style="display:none;"></div>
@@ -76,9 +83,11 @@
 
   <script>
     const GAS_URL = "https://script.google.com/macros/s/AKfycbzw8vASm3Nm7eIpcQYQ_QBMK4m3j0d9Thcw8N8nWBsuUPJDCsioB_KLErcH1nIP2v0/exec";
-    const TARGET_SHEET_ID = "18fxfF-BnNlDnhCH0NORbNeWXKSo1KHmljfPCkpvJTKo"; // 🔒 指定專用上鎖試算表 ID
-    let countdownTimer = null;
+    const TARGET_SHEET_ID = "18fxfF-BnNlDnhCH0NORbNeWXKSo1KHmljfPCkpvJTKo"; 
+    const GOOGLE_CLIENT_ID = "434067788519-ivv0ms7qobv7s5s7an8go152v8adc64l.apps.googleusercontent.com";
+    
     let currentEventData = null;
+    let googleTokenClient = null;
 
     function validateSchoolEmail(email) {
       const regex = /^\d{7}@tshcmc\.edu\.vn$/i;
@@ -95,6 +104,7 @@
       const urlParams = new URLSearchParams(window.location.search);
       const targetEventId = urlParams.get('eventId');
 
+      // 載入活動資料
       fetch(`${GAS_URL}?action=getEvents`)
         .then(res => res.json())
         .then(res => {
@@ -121,7 +131,6 @@
                   document.getElementById("targetEventDesc").textContent = item["說明"] || "";
                   document.getElementById("targetEventTime").textContent = `⏰ 開始時間：${new Date(item["開始時間"]).toLocaleString()} | ⌛ 截止時間：${new Date(item["結束時間"]).toLocaleString()}`;
                   
-                  // 渲染動態表單題目
                   renderDynamicQuestions(item["題目JSON"]);
                 }
                 select.appendChild(opt);
@@ -129,7 +138,75 @@
             });
           }
         });
+
+      // 初始化 Google Identity Services (GIS) Token Client 供自訂義按鈕呼叫
+      if (typeof google !== 'undefined') {
+        googleTokenClient = google.accounts.oauth2.initTokenClient({
+          client_id: GOOGLE_CLIENT_ID,
+          scope: 'email profile openid',
+          callback: (response) => {
+            if (response.access_token) {
+              fetchGoogleUserInfo(response.access_token);
+            }
+          },
+        });
+
+        // 綁定自訂義按鈕點擊事件
+        document.getElementById("customGoogleBtn").addEventListener("click", () => {
+          googleTokenClient.requestAccessToken();
+        });
+      }
     };
+
+    // 透過 Google Access Token 取得使用者資訊並驗證信箱格式
+    function fetchGoogleUserInfo(accessToken) {
+      fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+        headers: { 'Authorization': `Bearer ${accessToken}` }
+      })
+      .then(res => res.json())
+      .then(userInfo => {
+        const email = userInfo.email;
+
+        if (!validateSchoolEmail(email)) {
+          alert("❌ 驗證失敗：必須使用學校官方信箱（7位學號@tshcmc.edu.vn）登入！");
+          return;
+        }
+
+        // 驗證成功，寫入表單狀態
+        document.getElementById("googleCredential").value = accessToken; // 傳送 Access Token 供後端驗證
+        document.getElementById("verifiedEmail").value = email;
+        
+        document.getElementById("loggedInEmailText").textContent = `已驗證：${email}`;
+        document.getElementById("loginPromptBox").style.display = "none";
+        document.getElementById("userInfoBox").style.display = "block";
+        
+        const submitBtn = document.getElementById("submitBtn");
+        submitBtn.disabled = false;
+        submitBtn.textContent = "確認並送出報名";
+
+        const msgDiv = document.getElementById("message");
+        msgDiv.style.display = "block";
+        msgDiv.className = "message success";
+        msgDiv.textContent = "✅ Google 學校信箱驗證成功！";
+      })
+      .catch(err => {
+        console.error("取得 Google 用戶資料失敗", err);
+        alert("Google 登入驗證發生錯誤，請重試！");
+      });
+    }
+
+    function logoutGoogle() {
+      document.getElementById("googleCredential").value = "";
+      document.getElementById("verifiedEmail").value = "";
+      document.getElementById("loginPromptBox").style.display = "block";
+      document.getElementById("userInfoBox").style.display = "none";
+      
+      const submitBtn = document.getElementById("submitBtn");
+      submitBtn.disabled = true;
+      submitBtn.textContent = "請先完成 Google 登入驗證";
+      
+      document.getElementById("message").style.display = "none";
+    }
 
     function renderDynamicQuestions(jsonStr) {
       const container = document.getElementById("dynamicQuestionsContainer");
@@ -236,7 +313,6 @@
           container.appendChild(div);
         });
 
-        // 為所有 checkbox 綁定即時監聽（用於「其他」輸入框啟用與連動）
         document.querySelectorAll(".dynamic-checkbox").forEach(cb => {
           cb.addEventListener("change", function() {
             const row = this.closest('div') || this.parentElement;
@@ -294,63 +370,6 @@
       });
     }
 
-    function sendVerificationCode() {
-      const email = document.getElementById("email").value.trim();
-      const sendBtn = document.getElementById("sendCodeBtn");
-      const msgDiv = document.getElementById("message");
-
-      if (!validateSchoolEmail(email)) {
-        alert("請輸入正確的學校信箱格式：7位學號@tshcmc.edu.vn（例如：1234567@tshcmc.edu.vn）！");
-        return;
-      }
-
-      sendBtn.disabled = true;
-      sendBtn.textContent = "發送中...";
-
-      fetch(GAS_URL, {
-        method: "POST",
-        headers: { "Content-Type": "text/plain;charset=utf-8" },
-        body: JSON.stringify({ action: "sendCode", email: email })
-      })
-      .then(res => res.json())
-      .then(res => {
-        msgDiv.style.display = "block";
-        if (res.status === "success") {
-          msgDiv.className = "message success";
-          msgDiv.textContent = res.message;
-          document.getElementById("code").value = "";
-          startCountdown(120);
-        } else {
-          msgDiv.className = "message error";
-          msgDiv.textContent = res.message;
-          sendBtn.disabled = false;
-          sendBtn.textContent = "發送驗證碼";
-        }
-      })
-      .catch(err => {
-        alert("發送失敗，請稍後再試！");
-        sendBtn.disabled = false;
-        sendBtn.textContent = "發送驗證碼";
-      });
-    }
-
-    function startCountdown(seconds) {
-      const sendBtn = document.getElementById("sendCodeBtn");
-      let remain = seconds;
-      
-      clearInterval(countdownTimer);
-      countdownTimer = setInterval(() => {
-        if (remain <= 0) {
-          clearInterval(countdownTimer);
-          sendBtn.disabled = false;
-          sendBtn.textContent = "發送驗證碼";
-        } else {
-          sendBtn.textContent = `${remain} 秒後重新發送`;
-          remain--;
-        }
-      }, 1000);
-    }
-
     document.getElementById("signupForm").addEventListener("submit", function(e) {
       e.preventDefault();
 
@@ -365,7 +384,7 @@
         }
       }
 
-      // 檢查多選題的選取數量限制
+      // 檢查多選題限制
       let isValidSelection = true;
       const questionCards = document.querySelectorAll(".question-card-item");
       
@@ -404,19 +423,20 @@
       const msgDiv = document.getElementById("message");
 
       const eventId = document.getElementById("eventId").value;
-      const email = document.getElementById("email").value.trim();
+      const credential = document.getElementById("googleCredential").value;
+      const email = document.getElementById("verifiedEmail").value;
 
       if (!eventId) {
         alert("無效的活動項目！");
         return;
       }
 
-      if (!validateSchoolEmail(email)) {
-        alert("信箱格式錯誤！必須為 7 位學號@tshcmc.edu.vn");
+      if (!credential || !validateSchoolEmail(email)) {
+        alert("請先完成有效的 Google 學校信箱登入驗證！");
         return;
       }
 
-      // 收集動態表單的答案
+      // 收集動態表單答案
       let answers = {};
 
       questionCards.forEach(card => {
@@ -468,7 +488,7 @@
         action: "submit",
         eventId: eventId,
         email: email,
-        code: document.getElementById("code").value.trim(),
+        credential: credential, // 傳送 Access Token 供後端驗證
         answers: answers
       };
 
@@ -504,57 +524,31 @@
       });
     });
 
-    // --- 🔒 嚴格指定監控特定試算表的狀態機制 ---
+    // 系統狀態檢查
     let consecutiveErrors = 0;
-
     function checkSystemStatus(isInitialCheck = false) {
       fetch(`${GAS_URL}?action=checkLockStatus&spreadsheetId=${TARGET_SHEET_ID}&_t=${Date.now()}`)
         .then(res => res.json())
         .then(res => {
           if (res && res.status === "success") {
             if (res.maintenance === true) {
-              if (isInitialCheck) {
-                consecutiveErrors++;
-                if (consecutiveErrors >= 3) {
-                  window.location.href = "maintenance.html";
-                } else {
-                  setTimeout(() => checkSystemStatus(true), 500);
-                }
-              } else {
-                window.location.href = "maintenance.html";
-              }
+              window.location.href = "maintenance.html";
               return;
             }
-
             if (res.locked === true) {
-              if (isInitialCheck) {
-                consecutiveErrors++;
-                if (consecutiveErrors >= 3) {
-                  window.location.href = "lock.html";
-                } else {
-                  setTimeout(() => checkSystemStatus(true), 500);
-                }
-              } else {
-                window.location.href = "lock.html";
-              }
+              window.location.href = "lock.html";
               return;
             }
-
             consecutiveErrors = 0;
           }
         })
-        .catch(err => {
-          console.debug("背景狀態同步暫時略過 (網路波動)", err);
-        });
+        .catch(err => console.debug("背景狀態同步暫時略過", err));
     }
 
     window.addEventListener("load", () => {
       if (window.location.pathname.includes("lock.html") || window.location.pathname.includes("maintenance.html")) return;
-
       checkSystemStatus(true);
-      setInterval(() => {
-        checkSystemStatus(false);
-      }, 2000);
+      setInterval(() => checkSystemStatus(false), 2000);
     });
   </script>
 </body>
