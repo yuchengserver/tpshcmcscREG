@@ -6,15 +6,15 @@
   <title>TSSC13TH - 活動報名專區</title>
   <link rel="stylesheet" href="style.css">
   <link rel="stylesheet" href="signup.css">
-
   
+  <!-- 引入 Google Identity Services SDK -->
   <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body>
   <!-- 頂部導覽列 -->
   <header class="navbar">
     <a href="index.html" class="nav-brand">
-      <img src="tpshcmcsc.png" alt="TSSC Logo" class="nav-logo">
+      <img src="tsscblack.png" alt="TSSC Logo" class="nav-logo">
       <span>TSSC13TH 活動報名專區</span>
     </a>
     <div class="nav-menu">
@@ -46,8 +46,8 @@
       </div>
 
       <!-- Google OAuth 2.0 登入驗證區塊 -->
-      <div class="form-group" style="margin-top: 25px;">
-        <label>學校官方電子信箱驗證 (Google OAuth 2.0) *</label>
+      <div class="form-group question-card-item" style="margin-top: 25px;">
+        <label style="font-weight: 600; font-size: 15px; color: #1f2328; display: block; margin-bottom: 10px;">學校官方電子信箱驗證 (Google OAuth 2.0) <span style="color:red;">*</span></label>
         
         <!-- 未登入時顯示自訂義 Google 登入按鈕 -->
         <div id="loginPromptBox">
@@ -55,7 +55,7 @@
             <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.63-.06-1.25-.16-1.84H9v3.49h4.84c-.21 1.12-.86 2.07-1.83 2.71v2.26h2.97c1.74-1.6 2.66-3.95 2.66-6.62z"/><path fill="#34A853" d="M9 18c2.43 0 4.47-.8 5.96-2.18l-2.97-2.26c-.81.54-1.84.86-2.99.86-2.31 0-4.27-1.56-4.97-3.66H1.02v2.33C2.53 15.93 5.51 18 9 18z"/><path fill="#FBBC05" d="M4.03 10.76c-.18-.54-.28-1.13-.28-1.76s.1-1.22.28-1.76V4.91H1.02C.37 6.22 0 7.7 0 9.29s.37 3.07 1.02 4.38l3.01-2.33z"/><path fill="#EA4335" d="M9 3.58c1.32 0 2.51.45 3.44 1.35l2.58-2.58C13.46.89 11.43 0 9 0 5.51 0 2.53 2.07 1.02 4.91l3.01 2.33c.7-2.1 2.66-3.66 4.97-3.66z"/></svg>
             使用學校 Google 信箱登入驗證
           </button>
-          <small class="hint-text">點擊後將彈出 Google 視窗，請選擇您的學校信箱（@tshcmc.edu.vn）完成身份驗證。</small>
+          <small class="hint-text" style="display: block; margin-top: 8px; text-align: center; color: #57606a; font-size: 12px;">點擊後將彈出 Google 視窗，請選擇您的學校信箱（@tshcmc.edu.vn）完成身份驗證。</small>
         </div>
 
         <!-- 登入成功後顯示的身份資訊 -->
@@ -71,12 +71,12 @@
         <input type="hidden" id="verifiedEmail">
       </div>
 
-      <button type="submit" id="submitBtn" class="btn-submit" style="margin-top: 20px;" disabled>請先完成 Google 登入驗證</button>
+      <button type="submit" id="submitBtn" class="btn-submit" style="margin-top: 25px; padding: 14px; font-size: 16px;" disabled>請先完成 Google 登入驗證</button>
     </form>
 
-    <div id="message" class="message" style="display:none;"></div>
+    <div id="message" class="message" style="display:none; margin-top: 15px;"></div>
 
-    <div class="login-footer" style="margin-top: 35px; text-align: center;">
+    <div class="login-footer" style="margin-top: 40px; text-align: center;">
       胡志明市臺灣學校學生會 TSSC13TH © 2026 yucheng
     </div>
   </div>
@@ -226,11 +226,7 @@
           div.setAttribute("data-type", q.type);
           div.setAttribute("data-min", q.minSelect || 0);
           div.setAttribute("data-max", q.maxSelect || 0);
-          div.style.marginBottom = "25px";
-          div.style.background = "#f6f8fa";
-          div.style.padding = "15px";
-          div.style.borderRadius = "8px";
-          div.style.border = "1px solid #d0d7de";
+          div.style.marginBottom = "20px";
 
           let limitHint = "";
           if (q.type === "checkbox" && (q.minSelect > 0 || q.maxSelect > 0)) {
@@ -247,7 +243,7 @@
             }
           }
 
-          let labelHTML = `<label style="font-weight: 600; font-size: 15px;">${q.label} ${q.required ? '<span style="color:red;">*</span>' : ''}${limitHint}</label>`;
+          let labelHTML = `<label style="font-weight: 600; font-size: 15px; color: #1f2328; display: block; margin-bottom: 10px;">${q.label} ${q.required ? '<span style="color:red;">*</span>' : ''}${limitHint}</label>`;
           let imgHTML = q.imageUrl ? `<div style="margin-top: 8px;"><img src="${q.imageUrl}" class="question-img"></div>` : "";
           let inputHTML = "";
 
@@ -277,15 +273,15 @@
               const optObj = typeof opt === 'string' ? { text: opt, isOther: false } : opt;
               if (optObj.isOther) {
                 opts += `
-                  <div style="margin-top: 6px; display: flex; align-items: center; gap: 8px;">
-                    <label style="font-weight: normal; display: flex; align-items: center; gap: 4px; margin: 0; cursor: pointer;">
+                  <div style="margin-top: 8px; display: flex; align-items: center; gap: 8px;">
+                    <label style="font-weight: normal; display: flex; align-items: center; gap: 6px; margin: 0; cursor: pointer;">
                       <input type="radio" name="q_${index}" value="other" class="dynamic-radio" onchange="handleRadioOther(this)"> 其他：
                     </label>
-                    <input type="text" class="form-control radio-other-input" disabled placeholder="請自行填寫" style="flex: 1; padding: 4px 8px; font-size: 13px;">
+                    <input type="text" class="form-control radio-other-input" disabled placeholder="請自行填寫" style="flex: 1; padding: 6px 10px; font-size: 13px;">
                   </div>
                 `;
               } else {
-                opts += `<div style="margin-top: 6px;"><label style="font-weight: normal; cursor: pointer;"><input type="radio" name="q_${index}" value="${optObj.text}" class="dynamic-radio" onchange="handleRadioOther(this)"> ${optObj.text}</label></div>`;
+                opts += `<div style="margin-top: 8px;"><label style="font-weight: normal; cursor: pointer; display: flex; align-items: center; gap: 6px;"><input type="radio" name="q_${index}" value="${optObj.text}" class="dynamic-radio" onchange="handleRadioOther(this)"> ${optObj.text}</label></div>`;
               }
             });
             inputHTML = opts;
@@ -295,15 +291,15 @@
               const optObj = typeof opt === 'string' ? { text: opt, isOther: false } : opt;
               if (optObj.isOther) {
                 opts += `
-                  <div style="margin-top: 6px; display: flex; align-items: center; gap: 8px;">
-                    <label style="font-weight: normal; display: flex; align-items: center; gap: 4px; margin: 0; cursor: pointer;">
+                  <div style="margin-top: 8px; display: flex; align-items: center; gap: 8px;">
+                    <label style="font-weight: normal; display: flex; align-items: center; gap: 6px; margin: 0; cursor: pointer;">
                       <input type="checkbox" value="other" class="dynamic-checkbox"> 其他：
                     </label>
-                    <input type="text" class="form-control checkbox-other-input" disabled placeholder="請自行填寫" style="flex: 1; padding: 4px 8px; font-size: 13px;">
+                    <input type="text" class="form-control checkbox-other-input" disabled placeholder="請自行填寫" style="flex: 1; padding: 6px 10px; font-size: 13px;">
                   </div>
                 `;
               } else {
-                opts += `<div style="margin-top: 6px;"><label style="font-weight: normal; cursor: pointer;"><input type="checkbox" value="${optObj.text}" class="dynamic-checkbox"> ${optObj.text}</label></div>`;
+                opts += `<div style="margin-top: 8px;"><label style="font-weight: normal; cursor: pointer; display: flex; align-items: center; gap: 6px;"><input type="checkbox" value="${optObj.text}" class="dynamic-checkbox"> ${optObj.text}</label></div>`;
               }
             });
             inputHTML = opts;
