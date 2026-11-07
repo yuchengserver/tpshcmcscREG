@@ -85,15 +85,21 @@
         </div>
 
         
-        <div class="form-group" style="margin-top: 15px;">
-            <label for="eventImageUrl">活動說明圖片</label>
-            <div style="display: flex; gap: 10px;">
-            <input type="url" id="eventImageUrl" class="form-control" placeholder="https://example.com/image.png" oninput="previewEventImage(this.value)" style="flex: 1;">
-        </div>
-             <div id="eventImgPreviewContainer" style="margin-top: 8px; display: none;">
-             <img id="eventImgPreview" class="preview-img" alt="活動說明圖片預覽">
-        </div>
-     </div>
+        <!-- 活動說明文字欄位 -->
+<div class="form-group" style="margin-top: 15px;">
+  <label for="eventDesc">活動說明 *</label>
+  <textarea id="eventDesc" class="form-control" rows="3" placeholder="請輸入活動詳細說明或注意事項" required></textarea>
+</div>
+
+<!-- 支援本機檔案上傳的活動圖片欄位 -->
+<div class="form-group" style="margin-top: 15px;">
+  <label for="eventImageFile">活動說明圖片（選擇圖片上傳）</label>
+  <input type="file" id="eventImageFile" class="form-control" accept="image/*" onchange="handleImageUpload(this)" style="padding: 8px;">
+  <input type="hidden" id="eventImageUrl"> 
+  <div id="eventImgPreviewContainer" style="margin-top: 8px; display: none;">
+    <img id="eventImgPreview" class="preview-img" alt="活動圖片預覽">
+  </div>
+</div>
 
         <div class="form-row">
           <div class="form-group half">
@@ -807,6 +813,25 @@
         img.src = "";
       }
     }
+    // 處理本機檔案上傳並轉換為 Base64 預覽
+function handleImageUpload(input) {
+  if (input.files && input.files[0]) {
+    const file = input.files[0];
+    const reader = new FileReader();
+    
+    reader.onload = function(e) {
+      const base64String = e.target.result;
+      document.getElementById("eventImageUrl").value = base64String;
+      
+      // 顯示圖片預覽
+      const img = document.getElementById("eventImgPreview");
+      img.src = base64String;
+      document.getElementById("eventImgPreviewContainer").style.display = "block";
+    };
+    
+    reader.readAsDataURL(file);
+  }
+}
   </script>
 </body>
 </html>
