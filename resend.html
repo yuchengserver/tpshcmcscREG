@@ -23,7 +23,7 @@
     </div>
   </header>
 
-  <div class="container wide">
+  <div class="container wide" style="padding-bottom: 30px;">
     <!-- 驗證區塊 (預設顯示) -->
     <div id="authSection">
       <div class="login-card-wrapper">
@@ -32,20 +32,12 @@
           <p class="login-subtitle">請使用學校官方信箱（<code>@tshcmc.edu.vn</code>）進行 Google 驗證，即可自動檢視與管理您的報名活動。</p>
 
           <div class="login-form">
-            <!-- 未登入時顯示 Google 登入按鈕，點擊後直接觸發授權並查詢 -->
+            <!-- 未登入時顯示 Google 登入按鈕 -->
             <div id="loginPromptBox">
               <button type="button" id="customGoogleBtn" class="btn-google-custom">
                 <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.63-.06-1.25-.16-1.84H9v3.49h4.84c-.21 1.12-.86 2.07-1.83 2.71v2.26h2.97c1.74-1.6 2.66-3.95 2.66-6.62z"/><path fill="#34A853" d="M9 18c2.43 0 4.47-.8 5.96-2.18l-2.97-2.26c-.81.54-1.84.86-2.99.86-2.31 0-4.27-1.56-4.97-3.66H1.02v2.33C2.53 15.93 5.51 18 9 18z"/><path fill="#FBBC05" d="M4.03 10.76c-.18-.54-.28-1.13-.28-1.76s.1-1.22.28-1.76V4.91H1.02C.37 6.22 0 7.7 0 9.29s.37 3.07 1.02 4.38l3.01-2.33z"/><path fill="#EA4335" d="M9 3.58c1.32 0 2.51.45 3.44 1.35l2.58-2.58C13.46.89 11.43 0 9 0 5.51 0 2.53 2.07 1.02 4.91l3.01 2.33c.7-2.1 2.66-3.66 4.97-3.66z"/></svg>
                 使用學校 Google 帳號登入查詢
               </button>
-            </div>
-
-            <!-- 登入成功後顯示的身份資訊 -->
-            <div id="userInfoBox" style="display: none;">
-              <div class="user-info-badge">
-                <span id="loggedInEmailText" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 250px;">已驗證...</span>
-                <button type="button" onclick="logoutGoogle()" class="btn-secondary" style="padding: 4px 10px; font-size: 12px; background: #ffffff; color: #cf222e; border-color: #ffc1c0; cursor: pointer; border-radius: 6px;">切換帳號</button>
-              </div>
             </div>
             
             <!-- 隱藏欄位儲存 Token 與 Email -->
@@ -53,10 +45,13 @@
             <input type="hidden" id="verifiedEmail">
           </div>
 
-          <div id="message" class="message" style="display:none; margin-top: 15px;"></div>
+          <!-- 仿照後台風格的錯誤通知框 -->
+          <div id="loginMsgBox" style="display: none; margin-top: 20px; background-color: #ffeef0; border: 1px solid #ffc1c0; color: #cf222e; padding: 12px 16px; border-radius: 8px; font-size: 14px; font-weight: 600; text-align: center;">
+            <span id="loginMsgText"></span>
+          </div>
         </div>
 
-        <div class="login-footer" style="margin-top: 25px; text-align: center; color: #6e7781; font-size: 13px;">
+        <div class="login-footer" style="margin-top: 20px; text-align: center; color: #6e7781; font-size: 13px;">
           胡志明市臺灣學校學生會 TSSC13TH © 2026 yucheng
         </div>
       </div>
@@ -64,11 +59,13 @@
 
     <!-- 查詢結果清單區塊 -->
     <div id="resultsContainer" style="display: none; margin-top: 20px;">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 2px solid #eaecef; padding-bottom: 10px;">
-        <h3 style="margin: 0;">📋 您的報名紀錄清單</h3>
-        <button type="button" onclick="resetToAuth()" class="btn-secondary" style="width: auto; padding: 6px 14px; background-color: #f6f8fa; border: 1px solid #d0d7de; cursor: pointer; border-radius: 6px; font-size: 13px;">🔒 登出 / 重新驗證</button>
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; background: #ffffff; padding: 16px 20px; border-radius: 12px; border: 1px solid #e1e4e8;">
+        <div>
+          <h3 style="margin: 0 0 4px 0; font-size: 18px; color: #1f2328;">📋 您的報名紀錄清單</h3>
+          <p id="userEmailDisplay" style="margin: 0; color: #57606a; font-size: 13px;"></p>
+        </div>
+        <button type="button" onclick="resetToAuth()" class="btn-secondary" style="width: auto; padding: 6px 14px; background-color: #f6f8fa; border: 1px solid #d0d7de; cursor: pointer; border-radius: 6px; font-size: 13px; font-weight: 600; color: #cf222e;">🔒 切換帳號</button>
       </div>
-      <p id="userEmailDisplay" style="color: #57606a; font-size: 14px; margin-bottom: 20px;"></p>
       <div id="recordsGrid" class="event-grid"></div>
     </div>
   </div>
@@ -79,8 +76,6 @@
     const GOOGLE_CLIENT_ID = "434067788519-ivv0ms7qobv7s5s7an8go152v8adc64l.apps.googleusercontent.com";
 
     let allEventsMap = {};
-    let activeEmail = "";
-    let activeCredential = "";
     let googleTokenClient = null;
 
     function validateSchoolEmail(email) {
@@ -101,12 +96,20 @@
         });
 
         document.getElementById("customGoogleBtn").addEventListener("click", () => {
+          document.getElementById("loginMsgBox").style.display = "none";
           googleTokenClient.requestAccessToken();
         });
       }
 
       loadAllEvents();
     };
+
+    function showNotification(msg) {
+      const box = document.getElementById("loginMsgBox");
+      const text = document.getElementById("loginMsgText");
+      text.textContent = msg;
+      box.style.display = "block";
+    }
 
     function fetchGoogleUserInfo(accessToken) {
       fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
@@ -117,32 +120,26 @@
         const email = userInfo.email;
 
         if (!validateSchoolEmail(email)) {
-          alert("❌ 驗證失敗：必須使用學校官方信箱（7位學號@tshcmc.edu.vn）登入！");
+          showNotification(`❌ 驗證失敗：帳號 ${email} 非學校官方信箱（須為 7 位學號 @tshcmc.edu.vn）！`);
           return;
         }
 
         document.getElementById("googleCredential").value = accessToken;
         document.getElementById("verifiedEmail").value = email;
         
-        document.getElementById("loggedInEmailText").textContent = `已驗證：${email}`;
-        document.getElementById("loginPromptBox").style.display = "none";
-        document.getElementById("userInfoBox").style.display = "block";
-
-        // 取得 Token 與 Email 後直接自動執行查詢，不需再點擊其他按鈕
-        fetchMyRegistrations();
+        // 驗證成功後直接執行查詢並切換畫面
+        fetchMyRegistrations(email, accessToken);
       })
       .catch(err => {
         console.error("取得 Google 用戶資料失敗", err);
-        alert("Google 登入驗證發生錯誤，請重試！");
+        showNotification("❌ Google 登入驗證發生錯誤，請重試！");
       });
     }
 
-    function logoutGoogle() {
+    logoutGoogle = function() {
       document.getElementById("googleCredential").value = "";
       document.getElementById("verifiedEmail").value = "";
-      document.getElementById("loginPromptBox").style.display = "block";
-      document.getElementById("userInfoBox").style.display = "none";
-      document.getElementById("message").style.display = "none";
+      document.getElementById("loginMsgBox").style.display = "none";
     }
 
     function loadAllEvents() {
@@ -157,10 +154,7 @@
         });
     }
 
-    async function fetchMyRegistrations() {
-      const email = document.getElementById("verifiedEmail").value.trim();
-      const credential = document.getElementById("googleCredential").value.trim();
-      const msgDiv = document.getElementById("message");
+    async function fetchMyRegistrations(email, credential) {
       const authSection = document.getElementById("authSection");
       const resultsContainer = document.getElementById("resultsContainer");
       const recordsGrid = document.getElementById("recordsGrid");
@@ -176,17 +170,14 @@
         .then(res => res.json())
         .then(res => {
           if (res.status === "success") {
-            activeEmail = email;
-            activeCredential = credential;
-
             authSection.style.display = "none";
             resultsContainer.style.display = "block";
-            userEmailDisplay.textContent = `目前登入查詢信箱：${email}`;
+            userEmailDisplay.textContent = `已驗證登入信箱：${email}`;
             recordsGrid.innerHTML = "";
 
             const records = res.data;
             if (records.length === 0) {
-              recordsGrid.innerHTML = "<p class='no-data'>查無您的報名紀錄。</p>";
+              recordsGrid.innerHTML = "<p class='no-data' style='grid-column: 1/-1; text-align: center; padding: 40px; color: #57606a;'>目前查無您的報名紀錄。</p>";
               return;
             }
 
@@ -238,13 +229,12 @@
             });
 
           } else {
-            msgDiv.style.display = "block";
-            msgDiv.className = "message error";
-            msgDiv.textContent = res.message;
+            showNotification(res.message || "查詢失敗，請稍後再試。");
           }
         })
         .catch(err => {
           console.error(err);
+          showNotification("連線伺服器失敗，請檢查網路連線。");
         });
     }
 
@@ -260,7 +250,9 @@
       .then(res => {
         alert(res.message);
         if (res.status === "success") {
-          fetchMyRegistrations();
+          const emailVal = document.getElementById("verifiedEmail").value;
+          const credVal = document.getElementById("googleCredential").value;
+          fetchMyRegistrations(emailVal, credVal);
         }
       })
       .catch(err => {
@@ -269,20 +261,17 @@
     }
 
     function resetToAuth() {
-      activeEmail = "";
-      activeCredential = "";
       logoutGoogle();
-      
       document.getElementById("resultsContainer").style.display = "none";
       document.getElementById("authSection").style.display = "block";
     }
 
     window.addEventListener("beforeunload", () => {
-      resetToAuth();
+      logoutGoogle();
     });
 
     let consecutiveErrors = 0;
-    function checkSystemStatus(isInitialCheck = false) {
+    function checkSystemStatus() {
       fetch(`${GAS_URL}?action=checkLockStatus&spreadsheetId=${TARGET_SHEET_ID}&_t=${Date.now()}`)
         .then(res => res.json())
         .then(res => {
@@ -300,8 +289,8 @@
     }
 
     window.addEventListener("load", () => {
-      checkSystemStatus(true);
-      setInterval(() => checkSystemStatus(false), 2000);
+      checkSystemStatus();
+      setInterval(() => checkSystemStatus(), 2000);
     });
   </script>
 </body>
