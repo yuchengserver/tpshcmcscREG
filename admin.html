@@ -44,7 +44,7 @@
     </div>
   </div>
     
-    <div class="login-footer">
+    <div class="login-footer" style="margin-top: 60px; text-align: center; color: #6e7781; font-size: 13px; padding-bottom: 20px;">
       胡志明市臺灣學校學生會 TSSC13TH © 2026 yucheng
     </div>
   </div>
@@ -84,10 +84,16 @@
           </div>
         </div>
 
-        <div class="form-group">
-          <label for="newEventDesc">活動說明</label>
-          <textarea id="newEventDesc" class="form-control" rows="3" placeholder="活動詳細內容說明..."></textarea>
+        
+        <div class="form-group" style="margin-top: 15px;">
+            <label for="eventImageUrl">活動說明圖片</label>
+            <div style="display: flex; gap: 10px;">
+            <input type="url" id="eventImageUrl" class="form-control" placeholder="https://example.com/image.png" oninput="previewEventImage(this.value)" style="flex: 1;">
         </div>
+             <div id="eventImgPreviewContainer" style="margin-top: 8px; display: none;">
+             <img id="eventImgPreview" class="preview-img" alt="活動說明圖片預覽">
+        </div>
+     </div>
 
         <div class="form-row">
           <div class="form-group half">
@@ -790,6 +796,17 @@
         checkSystemStatus(false);
       }, 2000);
     });
+    function previewEventImage(url) {
+      const container = document.getElementById("eventImgPreviewContainer");
+      const img = document.getElementById("eventImgPreview");
+      if (url.trim() !== "") {
+        img.src = url.trim();
+        container.style.display = "block";
+      } else {
+        container.style.display = "none";
+        img.src = "";
+      }
+    }
   </script>
 </body>
 </html>
