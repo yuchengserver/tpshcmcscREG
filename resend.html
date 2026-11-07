@@ -6,9 +6,9 @@
   <title>TSSC13TH - 查詢我的報名紀錄</title>
   <link rel="icon" type="image/png" href="tsscblack.png">
   <link rel="stylesheet" href="style.css">
-  <link rel="stylesheet" href="signup.css">
- 
- 
+  <link rel="stylesheet" href="resend.css">
+  
+  <!-- 引入 Google Identity Services SDK -->
   <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body>
@@ -24,46 +24,48 @@
   </header>
 
   <div class="container wide">
-    <p style="margin-bottom: 15px;"><a href="index.html" class="back-link">← 返回活動列表</a></p>
-
     <!-- 驗證區塊 (預設顯示) -->
     <div id="authSection">
-      <div class="query-card">
-        <div class="rule-card-modern">
-          <h3>🔍 查詢與管理我的報名紀錄</h3>
-          <p>請使用學校官方信箱（<code>@tshcmc.edu.vn</code>）進行 Google 登入驗證，即可查看您所有報名過的活動。若活動仍在開放報名時間內，您可以選擇直接取消報名或重新報名。</p>
-        </div>
+      <div class="login-card-wrapper">
+        <p style="width: 100%; max-width: 460px; margin-bottom: 12px; text-align: left;"><a href="index.html" class="back-link">← 返回活動列表</a></p>
+        
+        <div class="login-card">
+          <h2>查詢與管理報名紀錄</h2>
+          <p class="login-subtitle">請使用學校官方信箱（<code>@tshcmc.edu.vn</code>）進行 Google 驗證，即可查看與管理您的報名活動。</p>
 
-        <div class="form-group" style="margin-bottom: 0;">
-          <label style="font-weight: 600; font-size: 13px; color: #24292f; display: block; margin-bottom: 8px;">學校官方電子信箱驗證 (Google OAuth 2.0) *</label>
-          
-          <!-- 未登入時顯示自訂義 Google 登入按鈕 -->
-          <div id="loginPromptBox">
-            <button type="button" id="customGoogleBtn" class="btn-google-custom">
-              <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.63-.06-1.25-.16-1.84H9v3.49h4.84c-.21 1.12-.86 2.07-1.83 2.71v2.26h2.97c1.74-1.6 2.66-3.95 2.66-6.62z"/><path fill="#34A853" d="M9 18c2.43 0 4.47-.8 5.96-2.18l-2.97-2.26c-.81.54-1.84.86-2.99.86-2.31 0-4.27-1.56-4.97-3.66H1.02v2.33C2.53 15.93 5.51 18 9 18z"/><path fill="#FBBC05" d="M4.03 10.76c-.18-.54-.28-1.13-.28-1.76s.1-1.22.28-1.76V4.91H1.02C.37 6.22 0 7.7 0 9.29s.37 3.07 1.02 4.38l3.01-2.33z"/><path fill="#EA4335" d="M9 3.58c1.32 0 2.51.45 3.44 1.35l2.58-2.58C13.46.89 11.43 0 9 0 5.51 0 2.53 2.07 1.02 4.91l3.01 2.33c.7-2.1 2.66-3.66 4.97-3.66z"/></svg>
-              使用學校 Google 信箱登入查詢
-            </button>
-            <small class="hint-text" style="display: block; margin-top: 8px; text-align: center; color: #57606a; font-size: 12px;">點擊後將彈出 Google 視窗，請選擇您的學校信箱完成驗證。</small>
-          </div>
-
-          <!-- 登入成功後顯示的身份資訊 -->
-          <div id="userInfoBox" style="display: none;">
-            <div class="user-info-badge">
-              <span id="loggedInEmailText">已驗證信箱：loading...</span>
-              <button type="button" onclick="logoutGoogle()" class="btn-secondary" style="padding: 4px 10px; font-size: 12px; background: #ffffff; color: #cf222e; border-color: #ffc1c0;">切換帳號</button>
+          <div class="login-form">
+            <!-- 未登入時顯示 Google 登入按鈕 -->
+            <div id="loginPromptBox">
+              <button type="button" id="customGoogleBtn" class="btn-google-custom">
+                <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.63-.06-1.25-.16-1.84H9v3.49h4.84c-.21 1.12-.86 2.07-1.83 2.71v2.26h2.97c1.74-1.6 2.66-3.95 2.66-6.62z"/><path fill="#34A853" d="M9 18c2.43 0 4.47-.8 5.96-2.18l-2.97-2.26c-.81.54-1.84.86-2.99.86-2.31 0-4.27-1.56-4.97-3.66H1.02v2.33C2.53 15.93 5.51 18 9 18z"/><path fill="#FBBC05" d="M4.03 10.76c-.18-.54-.28-1.13-.28-1.76s.1-1.22.28-1.76V4.91H1.02C.37 6.22 0 7.7 0 9.29s.37 3.07 1.02 4.38l3.01-2.33z"/><path fill="#EA4335" d="M9 3.58c1.32 0 2.51.45 3.44 1.35l2.58-2.58C13.46.89 11.43 0 9 0 5.51 0 2.53 2.07 1.02 4.91l3.01 2.33c.7-2.1 2.66-3.66 4.97-3.66z"/></svg>
+                使用學校 Google 信箱登入查詢
+              </button>
             </div>
+
+            <!-- 登入成功後顯示的身份資訊 -->
+            <div id="userInfoBox" style="display: none;">
+              <div class="user-info-badge">
+                <span id="loggedInEmailText" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 250px;">已驗證...</span>
+                <button type="button" onclick="logoutGoogle()" class="btn-secondary" style="padding: 4px 10px; font-size: 12px; background: #ffffff; color: #cf222e; border-color: #ffc1c0; cursor: pointer; border-radius: 6px;">切換帳號</button>
+              </div>
+            </div>
+            
+            <!-- 隱藏欄位儲存 Token 與 Email -->
+            <input type="hidden" id="googleCredential">
+            <input type="hidden" id="verifiedEmail">
           </div>
-          
-          <!-- 隱藏欄位儲存 Token 與 Email -->
-          <input type="hidden" id="googleCredential">
-          <input type="hidden" id="verifiedEmail">
+
+          <button type="button" id="queryBtn" class="btn-submit" onclick="fetchMyRegistrations()" style="margin-top: 20px; width: 100%; border-radius: 10px; padding: 12px;" disabled>請先完成 Google 登入驗證</button>
+          <div id="message" class="message" style="display:none; margin-top: 15px;"></div>
         </div>
 
-        <button type="button" id="queryBtn" class="btn-submit" onclick="fetchMyRegistrations()" style="margin-top: 20px;" disabled>請先完成 Google 登入驗證</button>
-        <div id="message" class="message" style="display:none; margin-top: 15px;"></div>
+        <div class="login-footer" style="margin-top: 25px; text-align: center; color: #6e7781; font-size: 13px;">
+          胡志明市臺灣學校學生會 TSSC13TH © 2026 yucheng
+        </div>
       </div>
     </div>
 
+    <!-- 查詢結果清單區塊 -->
     <div id="resultsContainer" style="display: none; margin-top: 20px;">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 2px solid #eaecef; padding-bottom: 10px;">
         <h3 style="margin: 0;">📋 您的報名紀錄清單</h3>
@@ -71,10 +73,6 @@
       </div>
       <p id="userEmailDisplay" style="color: #57606a; font-size: 14px; margin-bottom: 20px;"></p>
       <div id="recordsGrid" class="event-grid"></div>
-    </div>
-
-    <div class="login-footer" style="margin-top: 40px; text-align: center;">
-      胡志明市臺灣學校學生會 TSSC13TH © 2026 yucheng
     </div>
   </div>
 
@@ -140,7 +138,7 @@
         const msgDiv = document.getElementById("message");
         msgDiv.style.display = "block";
         msgDiv.className = "message success";
-        msgDiv.textContent = "✅ Google 學校信箱驗證成功！請點擊下方按鈕查詢。";
+        msgDiv.textContent = "✅ Google 學校信箱驗證成功！";
       })
       .catch(err => {
         console.error("取得 Google 用戶資料失敗", err);
